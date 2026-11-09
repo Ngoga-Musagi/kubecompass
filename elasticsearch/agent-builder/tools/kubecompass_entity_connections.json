@@ -1,0 +1,12 @@
+{
+  "id": "kubecompass_entity_connections",
+  "type": "esql",
+  "description": "Knowledge-graph connections of an entity id (e.g. topic:gpu-scheduling, project:vllm, technology:ebpf) with relation type, origin (explicit/extracted/curated/inferred) and evidence. Inferred and extracted links are likely connections, not confirmed facts.",
+  "tags": ["kubecompass", "graph"],
+  "configuration": {
+    "query": "FROM conference_relationships | WHERE source_id == ?entity_id OR target_id == ?entity_id | KEEP source_id, type, target_id, origin, confidence, evidence | SORT confidence DESC | LIMIT 30",
+    "params": {
+      "entity_id": { "type": "string", "description": "Entity id such as topic:gpu-scheduling or project:vllm" }
+    }
+  }
+}

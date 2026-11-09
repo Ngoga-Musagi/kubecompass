@@ -1,0 +1,7 @@
+{
+  "id": "kubecompass_search_sessions",
+  "type": "index_search",
+  "description": "Search KubeCompass conference sessions (title, abstract, track, speakers, topics, technologies, day, time, room). Use for any question about what is presented at the conference.",
+  "tags": ["kubecompass", "sessions"],
+  "configuration": { "pattern": "conference_sessions" }
+}

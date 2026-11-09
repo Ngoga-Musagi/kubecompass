@@ -1,0 +1,43 @@
+name: KubeCompass topic briefing
+description: Retrieve sessions on a topic (semantic + keyword) and store an AI briefing for later reading. Exposed to the KubeCompass Guide agent as a workflow tool.
+enabled: true
+tags: [kubecompass]
+triggers:
+  - type: manual
+inputs:
+  - name: topic
+    type: string
+    description: Topic or question to brief on, e.g. "GPU scheduling for inference"
+    required: true
+steps:
+  - name: find_sessions
+    type: elasticsearch.search
+    with:
+      index: conference_sessions
+      size: 8
+      query:
+        bool:
+          filter:
+            - term: { is_content: "true" }  # string: workflow schema rejects booleans in term queries
+          should:
+            - multi_match:
+                query: "{{ inputs.topic }}"
+                fields: ["title^3", "entity_names^2", "description"]
+          minimum_should_match: 1
+  - name: write_briefing
+    type: ai.agent
+    agent-id: kubecompass-guide
+    with:
+      message: |
+        Write a short briefing (max 150 words) for an attendee interested in "{{ inputs.topic }}".
+        Use ONLY these session records; list each recommended session with title, day/time and room.
+        {{ steps.find_sessions.output.hits.hits | json }}
+  - name: store_briefing
+    type: elasticsearch.index
+    with:
+      index: kubecompass-briefings
+      document:
+        kind: topic
+        topic: "{{ inputs.topic }}"
+        created_at: '{{ "now" | date: "%Y-%m-%dT%H:%M:%SZ" }}'
+        briefing: "{{ steps.write_briefing.output.message }}"

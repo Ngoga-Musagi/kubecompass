@@ -1,0 +1,7 @@
+{
+  "id": "kubecompass_topic_briefing",
+  "type": "workflow",
+  "description": "Run the KubeCompass topic-briefing workflow: retrieves sessions on a topic and stores a briefing an attendee can read later. Use when the user asks to prepare or save a briefing.",
+  "tags": ["kubecompass", "workflow"],
+  "configuration": { "workflow_id": "kubecompass-topic-briefing" }
+}

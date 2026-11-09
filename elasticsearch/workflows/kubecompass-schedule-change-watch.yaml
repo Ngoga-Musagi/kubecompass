@@ -1,0 +1,39 @@
+name: KubeCompass schedule change watch
+description: Hourly, check the change log written by KubeCompass ingestion (moved, renamed, added or removed sessions) and store an attendee-facing summary.
+enabled: true
+tags: [kubecompass, scheduled]
+triggers:
+  - type: scheduled
+    with:
+      every: "1h"   # interval form; rrule freq HOURLY is rejected by the workflow validator
+  - type: manual
+steps:
+  - name: recent_changes
+    type: elasticsearch.search
+    with:
+      index: conference_changes
+      size: 50
+      query:
+        range:
+          detected_at: { gte: "now-1h" }
+  - name: any_changes
+    type: if
+    condition: steps.recent_changes.output.hits.hits.length > 0
+    steps:
+      - name: summarize_changes
+        type: ai.agent
+        agent-id: kubecompass-guide
+        with:
+          message: |
+            Summarize these official schedule changes for attendees (what moved, where and when),
+            one line per session, using ONLY these records:
+            {{ steps.recent_changes.output.hits.hits | json }}
+      - name: store_notice
+        type: elasticsearch.index
+        with:
+          index: kubecompass-briefings
+          document:
+            kind: schedule_changes
+            created_at: '{{ "now" | date: "%Y-%m-%dT%H:%M:%SZ" }}'
+            change_count: "{{ steps.recent_changes.output.hits.total.value }}"
+            briefing: "{{ steps.summarize_changes.output.message }}"

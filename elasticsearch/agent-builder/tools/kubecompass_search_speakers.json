@@ -1,0 +1,7 @@
+{
+  "id": "kubecompass_search_speakers",
+  "type": "index_search",
+  "description": "Search KubeCompass conference speakers by name, company, bio, expertise and the titles of their sessions.",
+  "tags": ["kubecompass", "speakers"],
+  "configuration": { "pattern": "conference_speakers" }
+}

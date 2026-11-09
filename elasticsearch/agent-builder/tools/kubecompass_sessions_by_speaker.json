@@ -1,0 +1,12 @@
+{
+  "id": "kubecompass_sessions_by_speaker",
+  "type": "esql",
+  "description": "Find sessions presented by a speaker (full-text match on speaker names).",
+  "tags": ["kubecompass", "speakers"],
+  "configuration": {
+    "query": "FROM conference_sessions | WHERE MATCH(speaker_names, ?speaker) | KEEP title, speaker_names, starts_at_local, room_name, track | SORT starts_at_local | LIMIT 20",
+    "params": {
+      "speaker": { "type": "string", "description": "Speaker name or part of it" }
+    }
+  }
+}

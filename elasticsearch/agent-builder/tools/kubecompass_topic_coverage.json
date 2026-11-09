@@ -1,0 +1,12 @@
+{
+  "id": "kubecompass_topic_coverage",
+  "type": "esql",
+  "description": "How many learning sessions cover each topic at the conference (topics extracted from session text). Use to answer 'what are the biggest themes' questions.",
+  "tags": ["kubecompass", "analytics"],
+  "configuration": {
+    "query": "FROM conference_sessions | WHERE is_content == true | STATS sessions = COUNT(*) BY topics | WHERE topics IS NOT NULL | SORT sessions DESC | LIMIT ?limit",
+    "params": {
+      "limit": { "type": "integer", "description": "Number of topics to return (e.g. 20)" }
+    }
+  }
+}

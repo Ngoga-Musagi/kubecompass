@@ -1,0 +1,13 @@
+{
+  "id": "kubecompass_sessions_on_day",
+  "type": "esql",
+  "description": "List learning sessions on a given conference day (YYYY-MM-DD, conference-local), ordered by start time, with room, track and format.",
+  "tags": ["kubecompass", "schedule"],
+  "configuration": {
+    "query": "FROM conference_sessions | WHERE day == ?day AND is_content == true | KEEP title, starts_at_local, room_name, track, format, audience_level | SORT starts_at_local | LIMIT ?limit",
+    "params": {
+      "day": { "type": "string", "description": "Conference-local date, e.g. 2026-11-11" },
+      "limit": { "type": "integer", "description": "Maximum number of sessions to return (e.g. 50)" }
+    }
+  }
+}

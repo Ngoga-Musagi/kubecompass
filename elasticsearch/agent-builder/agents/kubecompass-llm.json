@@ -1,0 +1,12 @@
+{
+  "id": "kubecompass-llm",
+  "name": "KubeCompass LLM",
+  "description": "Tool-less agent used by the KubeCompass API as a language-model provider (intent parsing and grounded answers over records the API supplies).",
+  "labels": ["kubecompass", "internal"],
+  "avatar_color": "#17171B",
+  "avatar_symbol": "KL",
+  "configuration": {
+    "instructions": "Follow the instructions in each message exactly. Use only the information contained in the message. Do not call tools. When asked for JSON, reply with a single JSON object and nothing else.",
+    "tools": [ { "tool_ids": [] } ]
+  }
+}

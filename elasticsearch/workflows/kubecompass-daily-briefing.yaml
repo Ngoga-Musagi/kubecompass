@@ -1,0 +1,50 @@
+name: KubeCompass daily briefing
+description: Every morning at 07:00 conference time, summarize the day's sessions and store the briefing.
+enabled: true
+tags: [kubecompass, scheduled]
+triggers:
+  - type: scheduled
+    with:
+      rrule:
+        freq: DAILY
+        interval: 1
+        tzid: America/Denver
+        byhour: [7]
+        byminute: [0]
+  - type: manual
+steps:
+  - name: todays_sessions
+    type: elasticsearch.search
+    with:
+      index: conference_sessions
+      size: 60
+      query:
+        bool:
+          filter:
+            - term: { is_content: "true" }  # string: workflow schema rejects booleans in term queries
+            - range: { starts_at: { gte: "now/d", lt: "now+1d/d" } }
+  - name: check_sessions
+    type: if
+    condition: steps.todays_sessions.output.hits.hits.length > 0
+    steps:
+      - name: write_digest
+        type: ai.agent
+        agent-id: kubecompass-guide
+        with:
+          message: |
+            Write today's KubeCon briefing: the 8 most notable sessions grouped by theme, each
+            with start time and room. Use ONLY these records:
+            {{ steps.todays_sessions.output.hits.hits | json }}
+      - name: store_digest
+        type: elasticsearch.index
+        with:
+          index: kubecompass-briefings
+          document:
+            kind: daily
+            created_at: '{{ "now" | date: "%Y-%m-%dT%H:%M:%SZ" }}'
+            briefing: "{{ steps.write_digest.output.message }}"
+    else:
+      - name: no_sessions
+        type: console
+        with:
+          message: "No sessions today; nothing to brief."
