@@ -65,7 +65,9 @@ function SearchPageInner() {
   };
   const [draft, setDraft] = React.useState(query);
   const [showFilters, setShowFilters] = React.useState(false);
-  React.useEffect(() => setDraft(query), [query]);
+  React.useEffect(() => {
+    setDraft(query);
+  }, [query]);
 
   const update = (mut: (p: URLSearchParams) => void) => {
     const p = new URLSearchParams(params.toString());

@@ -120,7 +120,11 @@ export default function AssistantPage() {
     onSuccess: (r) => setTurns((t) => [...t, { role: "assistant", content: r.answer, response: r }]),
   });
 
-  React.useEffect(() => endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }), [turns, chat.isPending]);
+  // Block body: scrollIntoView returns a Promise in newer browsers, and an effect must return
+  // nothing or a cleanup function.
+  React.useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [turns, chat.isPending]);
 
   const send = (text: string) => {
     const m = text.trim();

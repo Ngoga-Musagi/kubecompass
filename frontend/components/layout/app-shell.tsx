@@ -35,7 +35,9 @@ const NAV = [
 
 function useTheme() {
   const [dark, setDark] = React.useState(false);
-  React.useEffect(() => setDark(document.documentElement.classList.contains("dark")), []);
+  React.useEffect(() => {
+    setDark(document.documentElement.classList.contains("dark"));
+  }, []);
   const toggle = () => {
     const next = !dark;
     setDark(next);
@@ -142,7 +144,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const { dark, toggle } = useTheme();
   const pathname = usePathname();
-  React.useEffect(() => setMobileOpen(false), [pathname]);
+  React.useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   const sidebar = (
     <div className="flex h-full flex-col gap-5 px-3 py-4">

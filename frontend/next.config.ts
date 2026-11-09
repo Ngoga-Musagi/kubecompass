@@ -9,7 +9,11 @@ const nextConfig: NextConfig = {
   // to the backend inside the container (set BACKEND_INTERNAL_URL at build time).
   async rewrites() {
     const backend = process.env.BACKEND_INTERNAL_URL;
-    return backend ? [{ source: "/api/:path*", destination: `${backend}/api/:path*` }] : [];
+    // Browsers request /favicon.ico by default; serve the SVG icon instead of a 404.
+    const favicon = { source: "/favicon.ico", destination: "/icon.svg" };
+    return backend
+      ? [favicon, { source: "/api/:path*", destination: `${backend}/api/:path*` }]
+      : [favicon];
   },
   images: {
     // Speaker photos come from the Sessionize CDN referenced in the source data.

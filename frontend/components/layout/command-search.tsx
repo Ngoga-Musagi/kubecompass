@@ -95,7 +95,9 @@ export function CommandSearch() {
     return out;
   }, [data, dq]);
 
-  React.useEffect(() => setActive(0), [dq]);
+  React.useEffect(() => {
+    setActive(0);
+  }, [dq]);
 
   const go = (item?: Item) => {
     if (!item) return;
