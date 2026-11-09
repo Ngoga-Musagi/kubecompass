@@ -37,7 +37,7 @@ and Elastic Workflows for scheduled briefings.
 | **Knowledge graph** | An interactive explorer of topics, technologies, CNCF projects, sessions, speakers and organizations. Every edge shows where it came from: official schedule, extracted from text (with the sentence), curated vocabulary, or inferred |
 | **My Agenda** | Detects time conflicts, tight building changes and free gaps, suggests alternatives, shows schedule-change notices, and exports `.ics` in `America/Denver` with a proper VTIMEZONE. No account is needed |
 | **Assistant** | Answers questions from the indexed data with `[S#]`/`[P#]` citations, and says so when the data doesn't cover a question. Answers without citations are discarded |
-| **Elastic agent** | The `kubecompass-guide` Agent Builder agent answers in Kibana using 8 custom tools (ES|QL, index search, workflow) |
+| **Elastic agent** | The `kubecompass-guide` Agent Builder agent answers in Kibana using 8 custom tools (ES\|QL, index search, workflow) |
 
 | | |
 |---|---|
@@ -56,7 +56,7 @@ Elasticsearch is where the data lives and where every feature gets its answers.
 | **Hybrid retrieval**: native `rrf` retriever (BM25 + kNN), with the same filters applied inside both retrievers | `backend/app/search/` |
 | **Recommendations**: hybrid retrieval → personalized PageRank over the graph → configurable scoring (`ranking.yaml`) → tiers. Similarity thresholds are calibrated per embedding model | `backend/app/recommendation/`, `deployment/configuration/` |
 | **Graph edges** are stored as documents with provenance (`explicit` / `extracted` / `curated` / `inferred`) and read from Elasticsearch | `backend/app/knowledge_graph/` |
-| **Agent Builder**: the `kubecompass-guide` agent with 8 tools: 2 index-search tools, 5 parameterized **ES|QL** tools (sessions on a day, by speaker, topic coverage, entity connections, topic on a day) and a workflow tool | `elasticsearch/agent-builder/` |
+| **Agent Builder**: the `kubecompass-guide` agent with 8 tools: 2 index-search tools, 5 parameterized **ES\|QL** tools (sessions on a day, by speaker, topic coverage, entity connections, topic on a day) and a workflow tool | `elasticsearch/agent-builder/` |
 | **Elastic Workflows**: a daily 07:00 Denver briefing, an hourly schedule-change watch and on-demand topic briefings, stored in `kubecompass-briefings` | `elasticsearch/workflows/` |
 | **Provisioning as code**: `kubecompass elastic setup` creates the workflows, tools and agents idempotently, and `check` verifies them | `backend/app/elastic/` |
 
@@ -78,18 +78,92 @@ assistance, not by independent human judges, and 12 queries is a small set. Trea
 indicative; we don't claim the graph re-rank helps in general.
 
 ## Architecture
+**System overview.** Elasticsearch sits at the center: it stores every record and answers every query.
+
 ```mermaid
 flowchart LR
-  S[Sessionize JSON<br/>600 sessions · 712 speakers] --> I[Ingestion<br/>validate · normalize · diff]
-  I --> G[Vocabulary extraction<br/>+ knowledge graph with provenance]
-  G --> E[(Elasticsearch<br/>versioned indices + aliases)]
-  J[Jina v3 via Elastic<br/>Inference Service] --> E
-  E --> API[FastAPI<br/>search · recommendations · graph · agenda · assistant]
-  API --> UI[Next.js UI]
-  E --> AB[Agent Builder agent<br/>ES|QL + search + workflow tools]
-  E --> WF[Elastic Workflows<br/>daily briefing · change watch]
-  LLM[OpenAI / Anthropic / Elastic LLM / Ollama<br/>optional, chained failover] -.-> API
+  USER(["👤 Attendee<br/>browser · mobile"])
+  KIB(["🛠️ Organizer<br/>Kibana"])
+
+  subgraph SRC["📥 Official data"]
+    SZ["Sessionize public feeds<br/>600 sessions · 712 speakers"]
+  end
+
+  subgraph ING["⚙️ Ingestion pipeline"]
+    direction TB
+    V["Validate · normalize<br/>diff vs last version"]
+    X["Entity extraction<br/>cloud-native vocabulary"]
+    KG["Knowledge graph<br/>edges with provenance"]
+    V --> X --> KG
+  end
+
+  subgraph EC["☁️ Elastic Cloud Serverless: core data layer"]
+    direction TB
+    IDX[("🔎 Versioned indices + aliases<br/>sessions · speakers · entities<br/>relationships · attendees · changes")]
+    JINA["🧠 Jina v3 embeddings<br/>Elastic Inference Service"]
+    AB["🤖 Agent Builder<br/>kubecompass-guide · 8 tools<br/>ES#124;QL · index search · workflow"]
+    WF["⏱️ Elastic Workflows<br/>daily briefing · change watch"]
+    JINA -. "dense vectors" .-> IDX
+    AB --> IDX
+    WF --> IDX
+  end
+
+  subgraph APP["🧭 KubeCompass app: one container on Render or Kubernetes"]
+    direction TB
+    UI["🖥️ Next.js UI<br/>Discover · Search · Graph · Agenda · Assistant"]
+    API["⚡ FastAPI services<br/>hybrid BM25 + kNN + RRF<br/>PageRank ranking · agenda · grounded RAG"]
+    UI --> API
+  end
+
+  LLM["✨ LLM, optional<br/>OpenAI → Elastic LLM → Ollama"]
+
+  SZ --> V
+  KG -- "bulk index" --> IDX
+  USER --> UI
+  API <-->|"search · kNN · filters"| IDX
+  API -. "phrase answers with citations" .-> LLM
+  KIB --> AB
+
+  classDef user fill:#fde68a,stroke:#b45309,color:#1f2937
+  classDef src fill:#e0e7ff,stroke:#4338ca,color:#1f2937
+  classDef ing fill:#dbeafe,stroke:#1d4ed8,color:#1f2937
+  classDef es fill:#ccfbf1,stroke:#0f766e,color:#0f172a,font-weight:bold
+  classDef app fill:#fee2e2,stroke:#b91c1c,color:#1f2937
+  classDef llm fill:#f3e8ff,stroke:#7e22ce,color:#1f2937,stroke-dasharray: 5 3
+  class USER,KIB user
+  class SZ src
+  class V,X,KG ing
+  class IDX,JINA,AB,WF es
+  class UI,API app
+  class LLM llm
+  style EC fill:#f0fdfa,stroke:#0f766e,stroke-width:2px
+  style APP fill:#fff7f7,stroke:#b91c1c,stroke-width:2px
+  style ING fill:#f5f8ff,stroke:#1d4ed8
+  style SRC fill:#f7f7ff,stroke:#4338ca
 ```
+
+**One recommendation request, end to end:**
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor A as Attendee
+  participant UI as Next.js UI
+  participant API as FastAPI
+  participant ES as Elasticsearch
+  participant LLM as LLM (optional)
+  A->>UI: "AI autoscaling on GPUs, no security talks"
+  UI->>API: POST /api/discovery/intent
+  API->>LLM: parse intent (rules first, LLM refines)
+  API-->>UI: editable interest profile
+  UI->>API: POST /api/recommendations
+  API->>ES: hybrid retriever: BM25 + kNN (Jina) fused with RRF, filters inside both
+  ES-->>API: candidate sessions + scores
+  API->>ES: graph edges for personalized PageRank
+  API-->>UI: Must Attend / Highly Relevant / Explore + evidence
+  UI-->>A: ranked cards with reasons and quotes
+```
+
 - **Works without an LLM.** Rule-based intent parsing and extractive answers are the baseline; an
   LLM only improves the wording. Providers fail over automatically, with a daily call cap.
 - **Real data only.** Nothing is invented; fields missing from the source are shown as unavailable.
