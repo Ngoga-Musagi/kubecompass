@@ -1,0 +1,210 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------------------------------
+   KubeCompass design tokens (docs/UI_DESIGN.md)
+   Identity: warm "paper" surfaces, ink text, a single vermilion "needle" accent, editorial
+   serif display type, mono metadata. Tier and entity colours are semantic, never decorative.
+   ------------------------------------------------------------------------------------------ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --bg: #f6f5f1;
+  --surface: #ffffff;
+  --surface-2: #f0eee8;
+  --surface-3: #e9e6de;
+  --border: #e3e0d7;
+  --border-strong: #cdc9bd;
+  --ink: #17171b;
+  --ink-2: #47474f;
+  --ink-3: #74747f;
+  --ink-4: #a2a2ab;
+
+  --needle: #e2522b; /* primary accent: the compass needle */
+  --needle-ink: #b23b16;
+  --needle-soft: #fbe8e1;
+
+  --tier-must: #e2522b;
+  --tier-must-soft: #fbe8e1;
+  --tier-high: #3a56d4;
+  --tier-high-soft: #e7ebfb;
+  --tier-explore: #0f8a62;
+  --tier-explore-soft: #e1f3ec;
+
+  --ent-topic: #3a56d4;
+  --ent-technology: #7448d8;
+  --ent-project: #0f8a62;
+  --ent-speaker: #c2410c;
+  --ent-organization: #6b7280;
+  --ent-session: #17171b;
+  --ent-track: #b4235a;
+
+  --warn: #b45309;
+  --warn-soft: #fdf1dc;
+  --danger: #c0262d;
+  --danger-soft: #fbe5e5;
+  --ok: #0f8a62;
+
+  --shadow-sm: 0 1px 2px rgb(23 23 27 / 0.05);
+  --shadow-md: 0 1px 2px rgb(23 23 27 / 0.04), 0 6px 20px -6px rgb(23 23 27 / 0.1);
+  --shadow-lg: 0 2px 4px rgb(23 23 27 / 0.04), 0 20px 48px -12px rgb(23 23 27 / 0.18);
+  --ring: rgb(226 82 43 / 0.35);
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #0d0e11;
+  --surface: #15161b;
+  --surface-2: #1b1d23;
+  --surface-3: #23262e;
+  --border: #262931;
+  --border-strong: #363a44;
+  --ink: #ececef;
+  --ink-2: #b6b6be;
+  --ink-3: #85858f;
+  --ink-4: #5d5d67;
+
+  --needle: #ff6a3d;
+  --needle-ink: #ff8a64;
+  --needle-soft: #3a1d14;
+
+  --tier-must: #ff6a3d;
+  --tier-must-soft: #34190f;
+  --tier-high: #7d93ff;
+  --tier-high-soft: #1b2142;
+  --tier-explore: #3cc596;
+  --tier-explore-soft: #0f2a21;
+
+  --ent-topic: #8aa0ff;
+  --ent-technology: #b195ff;
+  --ent-project: #4fd1a5;
+  --ent-speaker: #ff9a6b;
+  --ent-organization: #a1a1aa;
+  --ent-session: #ececef;
+  --ent-track: #f472b6;
+
+  --warn: #f5b04c;
+  --warn-soft: #33250d;
+  --danger: #ff6b6b;
+  --danger-soft: #3a1416;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -8px rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 2px 4px rgb(0 0 0 / 0.3), 0 24px 56px -12px rgb(0 0 0 / 0.6);
+  --ring: rgb(255 106 61 / 0.4);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-ink-4: var(--ink-4);
+  --color-needle: var(--needle);
+  --color-needle-ink: var(--needle-ink);
+  --color-needle-soft: var(--needle-soft);
+  --color-must: var(--tier-must);
+  --color-must-soft: var(--tier-must-soft);
+  --color-high: var(--tier-high);
+  --color-high-soft: var(--tier-high-soft);
+  --color-explore: var(--tier-explore);
+  --color-explore-soft: var(--tier-explore-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-ok: var(--ok);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-serif), ui-serif, Georgia, serif;
+  --font-mono: var(--font-mono-face), ui-monospace, SFMono-Regular, monospace;
+
+  --radius-card: 14px;
+  --shadow-card: var(--shadow-md);
+  --shadow-pop: var(--shadow-lg);
+
+  --animate-rise: rise 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-fade: fade 300ms ease-out both;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes shimmer {
+    from { background-position: -400px 0; }
+    to { background-position: 400px 0; }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv11", "ss01";
+  }
+  ::selection {
+    background: var(--needle-soft);
+    color: var(--ink);
+  }
+  :focus-visible {
+    outline: 2px solid var(--needle);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  mark {
+    background: color-mix(in oklab, var(--needle) 18%, transparent);
+    color: inherit;
+    border-radius: 3px;
+    padding: 0 2px;
+  }
+}
+
+@layer components {
+  /* Small uppercase mono label used for metadata and section eyebrows. */
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-sm);
+  }
+  .skeleton {
+    background: linear-gradient(90deg, var(--surface-2) 0, var(--surface-3) 40px, var(--surface-2) 80px);
+    background-size: 800px 100%;
+    animation: var(--animate-shimmer);
+    border-radius: 8px;
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+}
