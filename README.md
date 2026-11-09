@@ -232,7 +232,7 @@ cd backend && uv run ruff check app tests && uv run mypy app && uv run pytest te
 cd frontend && npm run typecheck && npm run lint && npm test
 cd frontend && npx playwright install chromium && npx playwright test   # needs a running stack
 ```
-Latest run: **63 backend tests** (unit + integration against real Elasticsearch), **11 frontend unit
+Latest run: **63 backend tests** (unit + integration against real Elasticsearch), **12 frontend unit
 tests**, and **6 Playwright journeys** on desktop and mobile. All pass against the local stack, the
 Elastic Cloud stack and the single deploy container. ruff and mypy are clean.
 
