@@ -1,0 +1,47 @@
+{
+  "analysis": {
+    "filter": {
+      "kc_english_stemmer": {"type": "stemmer", "language": "english"},
+      "kc_possessive": {"type": "stemmer", "language": "possessive_english"},
+      "kc_stop": {"type": "stop", "stopwords": "_english_"},
+      "kc_synonyms": {
+        "type": "synonym_graph",
+        "lenient": true,
+        "synonyms": [
+          "k8s, kubernetes",
+          "llm, llms, large language model, large language models",
+          "genai, generative ai",
+          "otel, opentelemetry",
+          "wasm, webassembly",
+          "mcp, model context protocol",
+          "dra, dynamic resource allocation",
+          "hpa, horizontal pod autoscaler",
+          "vpa, vertical pod autoscaler",
+          "idp, internal developer platform",
+          "sre, site reliability engineering",
+          "slo, service level objective",
+          "rag, retrieval augmented generation",
+          "mlops, machine learning operations",
+          "sbom, software bill of materials",
+          "ebpf, extended berkeley packet filter",
+          "autoscaling, autoscaler, auto scaling",
+          "multicluster, multi cluster",
+          "agentic, ai agents, ai agent"
+        ]
+      }
+    },
+    "analyzer": {
+      "kc_text": {
+        "tokenizer": "standard",
+        "filter": ["kc_possessive", "lowercase", "kc_stop", "kc_english_stemmer"]
+      },
+      "kc_text_search": {
+        "tokenizer": "standard",
+        "filter": ["kc_possessive", "lowercase", "kc_synonyms", "kc_stop", "kc_english_stemmer"]
+      }
+    },
+    "normalizer": {
+      "kc_lower": {"type": "custom", "filter": ["lowercase", "asciifolding"]}
+    }
+  }
+}

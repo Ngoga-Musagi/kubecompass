@@ -1,0 +1,14 @@
+{
+  "dynamic": "strict",
+  "properties": {
+    "conference_id": {"type": "keyword"},
+    "session_id": {"type": "keyword"},
+    "title": {"type": "text"},
+    "change": {"type": "keyword"},
+    "fields": {"type": "keyword"},
+    "detected_at": {"type": "date"},
+    "ingestion_version": {"type": "keyword"},
+    "before": {"type": "object", "enabled": false},
+    "after": {"type": "object", "enabled": false}
+  }
+}

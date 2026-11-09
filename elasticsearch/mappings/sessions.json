@@ -1,0 +1,47 @@
+{
+  "dynamic": "strict",
+  "properties": {
+    "id": {"type": "keyword"},
+    "conference_id": {"type": "keyword"},
+    "source_id": {"type": "keyword"},
+    "title": {
+      "type": "text", "analyzer": "kc_text", "search_analyzer": "kc_text_search",
+      "fields": {
+        "keyword": {"type": "keyword", "normalizer": "kc_lower"},
+        "sayt": {"type": "search_as_you_type"}
+      }
+    },
+    "description": {"type": "text", "analyzer": "kc_text", "search_analyzer": "kc_text_search"},
+    "track": {"type": "keyword"},
+    "subtopics": {"type": "keyword"},
+    "audience_level": {"type": "keyword"},
+    "format": {"type": "keyword"},
+    "format_origin": {"type": "keyword"},
+    "flags": {"type": "keyword"},
+    "project_tags": {"type": "keyword"},
+    "speaker_ids": {"type": "keyword"},
+    "speaker_names": {
+      "type": "text", "analyzer": "standard",
+      "fields": {"keyword": {"type": "keyword", "normalizer": "kc_lower"}}
+    },
+    "speaker_companies": {"type": "keyword", "normalizer": "kc_lower"},
+    "entity_ids": {"type": "keyword"},
+    "entity_names": {"type": "text", "analyzer": "kc_text", "search_analyzer": "kc_text_search"},
+    "topics": {"type": "keyword"},
+    "technologies": {"type": "keyword"},
+    "projects": {"type": "keyword"},
+    "starts_at": {"type": "date"},
+    "ends_at": {"type": "date"},
+    "starts_at_local": {"type": "keyword"},
+    "day": {"type": "keyword"},
+    "duration_minutes": {"type": "integer"},
+    "room_id": {"type": "keyword"},
+    "room_name": {"type": "keyword"},
+    "venue": {"type": "keyword"},
+    "is_content": {"type": "boolean"},
+    "has_resources": {"type": "boolean"},
+    "status": {"type": "keyword"},
+    "embedding": {"type": "dense_vector", "dims": 384, "index": true, "similarity": "cosine"},
+    "doc": {"type": "object", "enabled": false}
+  }
+}

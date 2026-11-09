@@ -1,0 +1,10 @@
+{
+  "dynamic": "strict",
+  "properties": {
+    "conference_id": {"type": "keyword"},
+    "guest_id": {"type": "keyword"},
+    "updated_at": {"type": "date"},
+    "profile": {"type": "object", "enabled": false},
+    "agenda": {"type": "object", "enabled": false}
+  }
+}

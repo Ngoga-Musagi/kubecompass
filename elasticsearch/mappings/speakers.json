@@ -1,0 +1,31 @@
+{
+  "dynamic": "strict",
+  "properties": {
+    "id": {"type": "keyword"},
+    "conference_id": {"type": "keyword"},
+    "source_id": {"type": "keyword"},
+    "full_name": {
+      "type": "text", "analyzer": "standard",
+      "fields": {
+        "keyword": {"type": "keyword", "normalizer": "kc_lower"},
+        "sayt": {"type": "search_as_you_type"}
+      }
+    },
+    "tagline": {"type": "text", "analyzer": "kc_text", "search_analyzer": "kc_text_search"},
+    "bio": {"type": "text", "analyzer": "kc_text", "search_analyzer": "kc_text_search"},
+    "company": {
+      "type": "text", "analyzer": "standard",
+      "fields": {"keyword": {"type": "keyword", "normalizer": "kc_lower"}}
+    },
+    "job_title": {"type": "text", "analyzer": "standard"},
+    "session_ids": {"type": "keyword"},
+    "session_titles": {"type": "text", "analyzer": "kc_text", "search_analyzer": "kc_text_search"},
+    "tracks": {"type": "keyword"},
+    "entity_ids": {"type": "keyword"},
+    "entity_names": {"type": "text", "analyzer": "kc_text", "search_analyzer": "kc_text_search"},
+    "is_top_speaker": {"type": "boolean"},
+    "session_count": {"type": "integer"},
+    "embedding": {"type": "dense_vector", "dims": 384, "index": true, "similarity": "cosine"},
+    "doc": {"type": "object", "enabled": false}
+  }
+}

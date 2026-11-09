@@ -1,0 +1,33 @@
+{
+  "kubecompass_public_app": {
+    "cluster": [
+      "monitor",
+      "monitor_inference"
+    ],
+    "indices": [
+      {
+        "names": [
+          "conference_sessions*",
+          "conference_speakers*",
+          "conference_entities*",
+          "conference_relationships*",
+          "conference_changes*"
+        ],
+        "privileges": [
+          "read",
+          "view_index_metadata"
+        ]
+      },
+      {
+        "names": [
+          "conference_attendees*"
+        ],
+        "privileges": [
+          "read",
+          "write",
+          "view_index_metadata"
+        ]
+      }
+    ]
+  }
+}

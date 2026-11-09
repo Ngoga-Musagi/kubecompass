@@ -1,0 +1,17 @@
+{
+  "dynamic": "strict",
+  "properties": {
+    "id": {"type": "keyword"},
+    "conference_id": {"type": "keyword"},
+    "source_id": {"type": "keyword"},
+    "source_type": {"type": "keyword"},
+    "target_id": {"type": "keyword"},
+    "target_type": {"type": "keyword"},
+    "type": {"type": "keyword"},
+    "origin": {"type": "keyword"},
+    "method": {"type": "keyword"},
+    "confidence": {"type": "float"},
+    "weight": {"type": "float"},
+    "evidence": {"type": "text", "analyzer": "kc_text"}
+  }
+}
