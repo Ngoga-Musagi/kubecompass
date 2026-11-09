@@ -13,7 +13,7 @@ RRF, Jina embeddings through the Elastic Inference Service, ES|QL tools for an A
 and Elastic Workflows for scheduled briefings.
 
 > Built for the [WeMakeDevs Cloud Native Hackathon](https://www.wemakedevs.org/hackathons/cnh), Elasticsearch track ("Find the Right Talk").
-> **Live demo:** _added after the Render deploy_ · **Demo stack:** Elastic Cloud Serverless (GCP us-central1)
+> **Live demo:** [kubecompass.onrender.com](https://kubecompass.onrender.com/) (free tier: the first visit after idle can take ~1 min) · **Demo stack:** Elastic Cloud Serverless (GCP us-central1)
 
 ![Discover: ranked recommendations with evidence](docs/images/discover.png)
 
