@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubecompass-config
+  labels: {app.kubernetes.io/name: kubecompass}
+data:
+  KUBECOMPASS_EMBEDDING_PROVIDER: elastic
+  KUBECOMPASS_ELASTIC_EMBEDDING_INFERENCE_ID: .jina-embeddings-v3
+  KUBECOMPASS_EMBEDDING_DIMENSIONS: "1024"
+  KUBECOMPASS_SEMANTIC_TEXT_INFERENCE_ID: .jina-embeddings-v3
+  KUBECOMPASS_LLM_PROVIDER: openai
+  KUBECOMPASS_LLM_DAILY_CALL_LIMIT: "300"
+  KUBECOMPASS_RATE_LIMIT_PER_MINUTE: "10"

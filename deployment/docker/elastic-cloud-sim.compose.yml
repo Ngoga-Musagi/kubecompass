@@ -1,0 +1,48 @@
+# Local "Elastic Cloud simulator": secured Elasticsearch + Kibana (trial license, API keys) to test
+# Agent Builder tools/agents and Workflows before pushing them to Elastic Cloud.
+#   docker compose -f deployment/docker/elastic-cloud-sim.compose.yml up -d
+# Elasticsearch: http://localhost:9201  Kibana: http://localhost:5602  (user elastic / ${SIM_PASSWORD})
+# Local development/testing only (fixed, non-secret credentials).
+name: kubecompass-cloud-sim
+
+
+services:
+  es:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION:-9.4.8}
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=false
+      - xpack.license.self_generated.type=trial
+      - ELASTIC_PASSWORD=${SIM_PASSWORD:-kubecompass-sim}
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - cluster.routing.allocation.disk.threshold_enabled=false
+    ports:
+      - "127.0.0.1:9201:9200"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -u elastic:${SIM_PASSWORD:-kubecompass-sim} http://localhost:9200/_cluster/health?wait_for_status=yellow || exit 1"]
+      interval: 10s
+      retries: 30
+
+  setup:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION:-9.4.8}
+    depends_on:
+      es: { condition: service_healthy }
+    command: >
+      bash -c 'curl -fsS -u elastic:${SIM_PASSWORD:-kubecompass-sim} -H "Content-Type: application/json"
+      -X POST http://es:9200/_security/user/kibana_system/_password
+      -d "{\"password\":\"${SIM_PASSWORD:-kubecompass-sim}\"}" && echo kibana_system-ready'
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${ES_VERSION:-9.4.8}
+    depends_on:
+      setup: { condition: service_completed_successfully }
+    environment:
+      - ELASTICSEARCH_HOSTS=http://es:9200
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=${SIM_PASSWORD:-kubecompass-sim}
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=kubecompass-sim-only-encryption-key-000000
+      - XPACK_SECURITY_ENCRYPTIONKEY=kubecompass-sim-only-security-key-00000000
+      - XPACK_REPORTING_ENCRYPTIONKEY=kubecompass-sim-only-reporting-key-0000000
+    ports:
+      - "127.0.0.1:5602:5601"

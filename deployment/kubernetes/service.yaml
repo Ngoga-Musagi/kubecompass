@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubecompass
+  labels: {app.kubernetes.io/name: kubecompass}
+spec:
+  selector: {app.kubernetes.io/name: kubecompass}
+  ports:
+    - {name: http, port: 80, targetPort: http}

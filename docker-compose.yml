@@ -1,0 +1,79 @@
+name: kubecompass
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION:-9.4.8}
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false          # local demo only; see docs/ARCHITECTURE.md
+      - xpack.license.self_generated.type=trial  # enables native RRF retriever for comparison
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - cluster.routing.allocation.disk.threshold_enabled=false
+    ports:
+      - "127.0.0.1:${ES_PORT:-9200}:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+
+  backend:
+    build:
+      context: .
+      dockerfile: deployment/docker/backend.Dockerfile
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      - KUBECOMPASS_ES_URL=http://elasticsearch:9200
+      - KUBECOMPASS_REPO_ROOT=/app
+      # Local models: Ollama running on the host machine.
+      - KUBECOMPASS_OLLAMA_BASE_URL=${KUBECOMPASS_DOCKER_OLLAMA_BASE_URL:-http://host.docker.internal:11434/v1}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - ./data:/app/data
+      - model-cache:/app/.cache
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request;urllib.request.urlopen('http://localhost:8000/api/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 40
+      start_period: 120s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../deployment/docker/frontend.Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  # Optional: local Kibana to develop/test Agent Builder tools and Workflows against the local
+  # Elasticsearch (trial license). Start with: docker compose --profile kibana up -d kibana
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${ES_VERSION:-9.4.8}
+    profiles: ["kibana"]
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=kubecompass-local-dev-only-key-0123456789
+    ports:
+      - "127.0.0.1:${KIBANA_PORT:-5601}:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+volumes:
+  esdata:
+  model-cache:

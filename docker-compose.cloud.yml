@@ -1,0 +1,12 @@
+# Run the app against Elastic Cloud instead of the local Elasticsearch container:
+#   KUBECOMPASS_ENV_FILE=.env.cloud docker compose -f docker-compose.yml -f docker-compose.cloud.yml up -d --build backend frontend
+# The local `elasticsearch` service is not needed in this mode.
+services:
+  backend:
+    env_file: !override
+      - path: ${KUBECOMPASS_ENV_FILE:-.env.cloud}
+        required: true
+    environment: !override
+      - KUBECOMPASS_REPO_ROOT=/app
+      - KUBECOMPASS_OLLAMA_BASE_URL=${KUBECOMPASS_DOCKER_OLLAMA_BASE_URL:-http://host.docker.internal:11434/v1}
+    depends_on: !reset {}

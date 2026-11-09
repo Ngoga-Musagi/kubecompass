@@ -1,0 +1,37 @@
+# Render Blueprint: one public web service (Next.js UI + FastAPI in one container).
+# Data, search, Agent Builder and Workflows live in Elastic Cloud; this service is stateless.
+# Deploy: Render dashboard > New > Blueprint > pick this repo. Secrets (sync: false) are asked for
+# once in the dashboard and never stored in the repo. See docs/DEPLOYMENT.md.
+services:
+  - type: web
+    name: kubecompass
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./deployment/docker/app.Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      # Secrets: entered in the Render dashboard on first deploy.
+      - key: KUBECOMPASS_ES_URL
+        sync: false
+      - key: KUBECOMPASS_ES_API_KEY # use the least-privilege key, not your admin key
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      # Non-secret settings.
+      - key: KUBECOMPASS_EMBEDDING_PROVIDER
+        value: elastic
+      - key: KUBECOMPASS_ELASTIC_EMBEDDING_INFERENCE_ID
+        value: .jina-embeddings-v3
+      - key: KUBECOMPASS_EMBEDDING_DIMENSIONS
+        value: "1024"
+      - key: KUBECOMPASS_SEMANTIC_TEXT_INFERENCE_ID
+        value: .jina-embeddings-v3
+      - key: KUBECOMPASS_LLM_PROVIDER
+        value: openai
+      - key: KUBECOMPASS_LLM_DAILY_CALL_LIMIT
+        value: "300"
+      - key: KUBECOMPASS_RATE_LIMIT_PER_MINUTE
+        value: "10"
