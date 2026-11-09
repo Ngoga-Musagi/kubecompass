@@ -1,0 +1,47 @@
+# Secrets
+.env
+.env.*
+!.env.example
+!.env.cloud.example
+frontend/.env.local
+
+# Local caches / generated data
+.cache/
+data/processed/
+data/evaluation/results.json
+data/evaluation/pool.json
+backend/.venv/
+**/__pycache__/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+frontend/node_modules/
+frontend/.next/
+frontend/test-results/
+frontend/playwright-report/
+frontend/tsconfig.tsbuildinfo
+*.log
+
+# More secrets / credentials (never commit)
+*.pem
+*.key
+*.p12
+*.pfx
+*credentials*.json
+*service-account*.json
+.npmrc
+.pypirc
+**/secrets.yaml
+deployment/kubernetes/*secret*.yaml
+
+# Local tooling / OS / editor
+.claude/settings.local.json
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+coverage/
+.coverage
+htmlcov/
+frontend/coverage/

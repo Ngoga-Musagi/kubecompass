@@ -1,0 +1,17 @@
+# Never send secrets or local state into image builds.
+.env
+.env.*
+!.env.example
+!.env.cloud.example
+.cache/
+.git/
+**/node_modules/
+**/.next/
+backend/.venv/
+**/__pycache__/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+data/processed/
+frontend/test-results/
+frontend/playwright-report/
