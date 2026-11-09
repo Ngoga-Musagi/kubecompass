@@ -1,0 +1,74 @@
+# Conference-specific configuration. Reusable product logic must not hardcode
+# anything in this file; add a new YAML file to support another conference.
+id: kubecon-na-2026
+name: KubeCon + CloudNativeCon North America 2026
+short_name: KubeCon NA 2026
+city: Salt Lake City, Utah
+timezone: America/Denver          # IANA identifier; offsets are computed per date
+website: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/
+source:
+  adapter: sessionize
+  event_code: svi82w6c
+  sessions_url: https://sessionize.com/api/v2/svi82w6c/view/All
+  speakers_url: https://sessionize.com/api/v2/svi82w6c/view/Speakers
+  local_sessions_file: data/raw/kubecon-all.json
+  local_speakers_file: data/raw/kubecon-speakers.json
+  # No verified public per-session page exists for these Sessionize ids
+  # (checked 2026-11-09), so source links point at the Sessionize record itself.
+  schedule_url: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/program/schedule/
+
+# Sessionize category titles -> canonical meaning. Values are category *titles*
+# as they appear in the source data (inspected 2026-11-09).
+categories:
+  track: All Sessions
+  audience_level: Audience Level
+  subtopic: SubTopic
+  projects: CNCF Projects
+  flags:
+    End User Programming: end_user
+    Is Sponsored Keynote: sponsored
+    Solutions Showcase Programming: learning_lounge
+
+# Sessionize question titles -> canonical fields.
+questions:
+  speaker_company: Company
+  speaker_company_override: Company Override
+  speaker_title: Speaker Title
+  session_slides: Presentation Slides
+  session_repository: GitHub Repository
+  session_demo: Project Demo
+  session_website: Website
+  session_location_map: Location Map
+
+# Track (category item name, emoji stripped) -> session format.
+# Only formats grounded in the source category names are mapped. Unmapped
+# tracks fall back to "talk" when the session has speakers, else "other".
+format_by_track:
+  Keynote Sessions: keynote
+  Lightning Talks: lightning_talk
+  Project Lightning Talks: lightning_talk
+  Tutorials: tutorial
+  Contribfest: contribfest
+  Poster Sessions: poster
+  Sponsor Demo Theater: demo
+  Project Pavilion Tours: tour
+  Breaks: break
+  Registration: logistics
+  CNCF-hosted Co-located Events: co_located
+  Sponsor-hosted Co-located Events: co_located
+  Solutions Showcase: expo
+  Experiences: community
+  Project Opportunities: community
+  Project Pavilion Stage: community
+# Title rules apply only to sessions WITHOUT speakers (e.g. coffee breaks listed
+# inside a talk track). Checked before track mapping. Python regex, case-insensitive.
+format_by_title_without_speakers:
+  - {pattern: '^\W*(coffee break|lunch|breakfast)\b', format: break}
+format_by_subtopic:
+  BoF: birds_of_a_feather
+  Network Nook: community
+# Formats that are not learning content; excluded from recommendations by default.
+non_content_formats: [break, logistics, expo]
+# Values speakers enter in the "Company" field that are not organizations.
+non_organization_values: [Maintainer, Independent, Self, Self-employed, Self employed, Freelance,
+  Freelancer, Student, None, N/A, NA, "-", Retired, Unemployed, Open Source, Consultant]

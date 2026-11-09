@@ -1,0 +1,22 @@
+# Recommendation scoring weights. Starting hypothesis from the product brief,
+# NOT proven optimal; see docs/RECOMMENDATION_ENGINE.md and `make evaluate`.
+weights:
+  interest_match: 0.40      # hybrid retrieval: BM25 strength + semantic similarity to the intent
+  topic_technology: 0.20    # overlap between profile entities and session entities (with confidence)
+  graph_relevance: 0.15     # personalized PageRank from profile entities over the knowledge graph
+  learning_goal: 0.10       # semantic similarity between the stated learning goals and the session
+  novelty: 0.10             # relevant via graph/semantics but outside the explicit profile
+  format_preference: 0.05   # preferred formats and audience level
+
+tiers:
+  must_attend_ratio: 0.80   # score >= ratio * top score
+  highly_relevant_ratio: 0.60
+  min_top_score: 0.25       # below this, nothing is labelled "Must Attend"
+  must_attend_max: 8
+  highly_relevant_max: 16
+  explore_max: 10
+  explore_min_novelty: 0.25
+
+retrieval:
+  window: 80                # candidates from hybrid retrieval
+  graph_candidates: 40      # extra candidates from graph expansion

@@ -1,0 +1,198 @@
+# Curated cloud-native vocabulary used for dictionary-based entity extraction.
+#
+# This is domain knowledge, not conference data: an entry only becomes visible in
+# the product when real session/speaker text matches it, and every match keeps
+# the sentence it was found in as evidence (origin: extracted).
+#
+# Fields: id, name, aliases (matched case-insensitively on word boundaries),
+#   cs_aliases (case-sensitive aliases, for acronyms), parents (topic/technology ids;
+#   curated PART_OF edges), source_tags (explicit source category values that map here).
+version: "2026-11-09"
+
+# Broad topics that need stronger evidence (a title mention or 2+ abstract mentions).
+strict_match: [security, performance, observability, open-source-community,
+  workload-orchestration, storage, identity-access]
+# Near-universal entities at a cloud-native event: kept in the graph but damped in
+# ranking and ignored as "shared interest" evidence between sessions.
+low_signal: [project:kubernetes, topic:security, topic:performance, topic:observability,
+  topic:open-source-community, topic:workload-orchestration]
+
+topics:
+  - {id: ai-infrastructure, name: AI Infrastructure, aliases: [AI infrastructure, AI infra, AI workloads, AI/ML workloads, ML workloads, AI platform, AI platforms, ML platform, AI clusters, AI factory, AI factories]}
+  - {id: ai-inference, name: AI Inference, aliases: [inference, inferencing, inference workloads, LLM inference], parents: [ai-infrastructure]}
+  - {id: model-serving, name: Model Serving, aliases: [model serving, serving models, LLM serving, serving LLMs, model server, model servers, serve models, serving stack], parents: [ai-inference]}
+  - {id: llms, name: Large Language Models, aliases: [large language model, large language models, LLM, LLMs, generative AI, GenAI, foundation models]}
+  - {id: agentic-ai, name: Agentic AI, aliases: [agentic, AI agent, AI agents, LLM agents, autonomous agents, agent workflows, agentic workflows, multi-agent, agent-to-agent, coding agents]}
+  - {id: rag, name: Retrieval-Augmented Generation, aliases: [retrieval-augmented generation, retrieval augmented generation, vector database, vector databases, vector search, embeddings], cs_aliases: [RAG], parents: [llms]}
+  - {id: gpu-scheduling, name: GPU Scheduling & Sharing, aliases: [GPU scheduling, GPU sharing, GPU allocation, GPU utilization, GPU utilisation, fractional GPU, fractional GPUs, GPU partitioning, GPU slicing, time-slicing, accelerator scheduling, GPU efficiency, GPU fleet, GPU fleets, GPU clusters], parents: [ai-infrastructure, scheduling]}
+  - {id: model-training, name: Model Training, aliases: [model training, distributed training, fine-tuning, fine tuning, training jobs, LLM training, training workloads, pre-training], parents: [ai-infrastructure]}
+  - {id: mlops, name: MLOps, aliases: [MLOps, LLMOps, ML pipeline, ML pipelines, machine learning pipelines, model registry, model lifecycle, model artifacts, model packaging], parents: [ai-infrastructure]}
+  - {id: ai-security, name: AI Security, aliases: [AI security, prompt injection, model security, securing AI, AI safety, securing agents, agent security, AI guardrails], parents: [security]}
+  - {id: autoscaling, name: Autoscaling, aliases: [autoscaling, autoscaler, autoscalers, auto-scaling, auto scaling, scale to zero, scale-to-zero, horizontal pod autoscaler, vertical pod autoscaler, elastic scaling], cs_aliases: [HPA, VPA], source_tags: [Autoscaling]}
+  - {id: scheduling, name: Kubernetes Scheduling, aliases: [scheduler, schedulers, scheduling, kube-scheduler, gang scheduling, bin packing, bin-packing, topology-aware, topology aware, preemption, workload placement], source_tags: [Scheduling]}
+  - {id: batch-hpc, name: Batch & HPC, aliases: [batch workloads, batch jobs, batch processing, high performance computing, job queueing, job queue, job queues, Slurm], cs_aliases: [HPC], source_tags: [Batch]}
+  - {id: workload-orchestration, name: Workload Orchestration, aliases: [workload orchestration, workflow orchestration, orchestrating workloads, workload management, job orchestration, AI workload orchestration, durable execution]}
+  - {id: observability, name: Observability, aliases: [observability, telemetry, distributed tracing, tracing, traces, metrics, logging, logs, monitoring, profiling, dashboards, alerting], cs_aliases: [SLOs, SLO], source_tags: [Instrumentation]}
+  - {id: platform-engineering, name: Platform Engineering, aliases: [platform engineering, internal developer platform, internal developer platforms, developer portal, developer portals, platform team, platform teams, golden path, golden paths, platform as a product, self-service]}
+  - {id: gitops, name: GitOps, aliases: [GitOps, git ops]}
+  - {id: ci-cd, name: CI/CD & Delivery, aliases: [CI/CD, continuous delivery, continuous deployment, continuous integration, progressive delivery, deployment pipeline, deployment pipelines, canary, canary releases, release engineering, rollouts]}
+  - {id: supply-chain-security, name: Supply Chain Security, aliases: [supply chain, software supply chain, software bill of materials, SBOM, SBOMs, artifact signing, image signing, SLSA, attestation, attestations, provenance], parents: [security]}
+  - {id: policy-as-code, name: Policy as Code, aliases: [policy as code, policy-as-code, admission control, admission controller, admission controllers, admission webhook, policy engine, policy engines, policy enforcement, guardrails], parents: [security]}
+  - {id: identity-access, name: Identity & Access, aliases: [identity, authentication, authorization, zero trust, zero-trust, workload identity, secrets management, access control, least privilege, fine-grained authorization], cs_aliases: [RBAC, OIDC, OAuth], parents: [security], source_tags: [Auth]}
+  - {id: runtime-security, name: Runtime & Container Security, aliases: [runtime security, threat detection, container security, vulnerability, vulnerabilities, CVE, CVEs, sandboxing, container isolation, hardening, image scanning], parents: [security]}
+  - {id: security, name: Security, aliases: [security, secure, securing], source_tags: [Security]}
+  - {id: networking, name: Networking, aliases: [networking, network policy, network policies, load balancing, load balancer, ingress, egress, IPv6, multi-network, network performance, dataplane, data plane], cs_aliases: [CNI, DNS], source_tags: [Network]}
+  - {id: service-mesh, name: Service Mesh, aliases: [service mesh, service meshes, sidecar, sidecars, sidecarless, sidecar-less, ambient mesh, ambient mode], cs_aliases: [mTLS], parents: [networking]}
+  - {id: api-gateways, name: API & AI Gateways, aliases: [API gateway, API gateways, AI gateway, AI gateways, inference gateway, LLM gateway, traffic management], parents: [networking]}
+  - {id: storage, name: Storage & Data Protection, aliases: [storage, persistent volume, persistent volumes, stateful, backup, backups, disaster recovery, data protection], cs_aliases: [CSI], source_tags: [Storage, Data Protection]}
+  - {id: data-on-kubernetes, name: Data on Kubernetes, aliases: [data on Kubernetes, stateful workloads, databases, database, data platform, data pipelines, data pipeline, data processing, streaming data, event streaming]}
+  - {id: multi-cluster, name: Multi-Cluster & Hybrid Cloud, aliases: [multi-cluster, multicluster, multiple clusters, fleet management, cluster fleet, fleets of clusters, multi-cloud, multicloud, hybrid cloud, cross-cluster], source_tags: [Multicluster]}
+  - {id: edge-computing, name: Edge Computing, aliases: [edge computing, at the edge, edge devices, edge clusters, edge cluster, edge environments, IoT, internet of things, far edge]}
+  - {id: cost-finops, name: Cost & FinOps, aliases: [FinOps, cost optimization, cost optimisation, cloud cost, cloud costs, cost efficiency, cost savings, reduce costs, reducing costs, cost visibility]}
+  - {id: sustainability, name: Sustainability, aliases: [sustainability, sustainable, carbon, energy efficiency, green software, energy consumption, power consumption, emissions]}
+  - {id: reliability, name: Reliability & Resilience, aliases: [site reliability, reliability, resilience, resiliency, incident response, chaos engineering, postmortem, outage, outages, high availability, failover], cs_aliases: [SRE, SREs], source_tags: [Operational Resilience]}
+  - {id: developer-experience, name: Developer Experience, aliases: [developer experience, inner loop, developer productivity, local development, developer workflows], cs_aliases: [DevEx], source_tags: [Developer Experience]}
+  - {id: serverless, name: Serverless & Event-Driven, aliases: [serverless, functions as a service, event-driven, event driven], cs_aliases: [FaaS]}
+  - {id: virtualization, name: Virtualization, aliases: [virtual machine, virtual machines, virtualization, virtualisation], cs_aliases: [VMs]}
+  - {id: operators, name: Operators & Controllers, aliases: [operator pattern, Kubernetes operator, Kubernetes operators, custom controller, custom controllers, controllers, custom resource, custom resources, reconciliation, reconcile loop], cs_aliases: [CRD, CRDs], source_tags: [Operator Framework, API Machinery]}
+  - {id: cluster-lifecycle, name: Cluster Lifecycle & Upgrades, aliases: [cluster lifecycle, cluster upgrade, cluster upgrades, upgrades, provisioning, bare metal, bare-metal, day 2, day-2, node lifecycle], source_tags: [Cluster Lifecycle, Node Lifecycle, Infrastructure]}
+  - {id: multi-tenancy, name: Multi-Tenancy, aliases: [multi-tenancy, multi-tenant, multitenancy, multitenant, tenant isolation]}
+  - {id: performance, name: Performance & Efficiency, aliases: [performance, latency, throughput, benchmark, benchmarks, benchmarking, tail latency]}
+  - {id: open-source-community, name: Open Source Community, aliases: [contributor, contributors, maintainer, maintainers, open source community, mentoring, mentorship, governance, contributing, first-time contributors], source_tags: [Contributor Experience, Docs, Release]}
+  - {id: webassembly, name: WebAssembly, aliases: [WebAssembly, Wasm, WASI]}
+  - {id: confidential-computing, name: Confidential Computing, aliases: [confidential computing, confidential containers, trusted execution environment], cs_aliases: [TEE, TEEs], parents: [security]}
+  - {id: compliance, name: Compliance & Governance, aliases: [compliance, regulatory, auditing, FedRAMP, SOC 2, regulated industries], parents: [security]}
+  - {id: hardware-accelerators, name: Accelerators & Hardware, aliases: [accelerator, accelerators, hardware accelerators, device plugin, device plugins], cs_aliases: [RDMA, TPU, TPUs, NPU, NPUs], parents: [ai-infrastructure], source_tags: [Device Management]}
+
+technologies:
+  - {id: gpu, name: GPUs, aliases: [GPU, GPUs], parents: [hardware-accelerators]}
+  - {id: ebpf, name: eBPF, aliases: [eBPF], parents: [networking, observability]}
+  - {id: dra, name: Dynamic Resource Allocation, aliases: [dynamic resource allocation], cs_aliases: [DRA], parents: [hardware-accelerators, scheduling]}
+  - {id: mcp, name: Model Context Protocol, aliases: [model context protocol, MCP server, MCP servers], cs_aliases: [MCP], parents: [agentic-ai]}
+  - {id: a2a, name: Agent2Agent Protocol, aliases: [agent2agent, agent-to-agent protocol], cs_aliases: [A2A], parents: [agentic-ai]}
+  - {id: gateway-api, name: Gateway API, aliases: [Gateway API, Gateway API Inference Extension, inference extension], parents: [networking, api-gateways]}
+  - {id: oci, name: OCI Artifacts & Images, aliases: [OCI artifacts, OCI images, OCI registry, container images, container image], cs_aliases: [OCI], parents: [supply-chain-security]}
+  - {id: cuda, name: CUDA, cs_aliases: [CUDA], parents: [hardware-accelerators]}
+  - {id: kv-cache, name: KV Cache & Disaggregated Serving, aliases: [KV cache, KV-cache, prefix caching, prefix cache, KV caching, disaggregated serving, prefill, disaggregated inference], parents: [ai-inference]}
+  - {id: rust, name: Rust, cs_aliases: [Rust]}
+  - {id: golang, name: Go, aliases: [Golang]}
+  - {id: python, name: Python, cs_aliases: [Python]}
+  - {id: cel, name: Common Expression Language, aliases: [common expression language], cs_aliases: [CEL], parents: [policy-as-code]}
+  - {id: kubernetes-api, name: Kubernetes API, aliases: [Kubernetes API, kube-apiserver, API server, apiserver, admission webhooks], parents: [operators]}
+  - {id: containers, name: Containers, aliases: [container runtime, container runtimes]}
+  - {id: sbom, name: SBOM, aliases: [SBOM, SBOMs, software bill of materials], parents: [supply-chain-security]}
+
+projects:
+  - {id: kubernetes, name: Kubernetes, aliases: [Kubernetes, K8s, kubelet, kubectl], source_tags: [Kubernetes, Apps, Architecture, CLI, Cloud Provider, Node, Workloads Foundation]}
+  - {id: vllm, name: vLLM, aliases: [vLLM], parents: [model-serving, ai-inference]}
+  - {id: llm-d, name: llm-d, aliases: [llm-d], parents: [model-serving, ai-inference], source_tags: [llm-d]}
+  - {id: kserve, name: KServe, aliases: [KServe], parents: [model-serving], source_tags: [KServe]}
+  - {id: kubeflow, name: Kubeflow, aliases: [Kubeflow, Kubeflow Trainer, Kubeflow Pipelines, Katib], parents: [mlops, model-training], source_tags: [Kubeflow, Kubeflow Summit]}
+  - {id: ray, name: Ray, aliases: [KubeRay, Ray cluster, Ray clusters, Ray Serve], cs_aliases: [Ray], parents: [model-training, ai-infrastructure]}
+  - {id: kueue, name: Kueue, aliases: [Kueue], parents: [batch-hpc, scheduling]}
+  - {id: volcano, name: Volcano, aliases: [Volcano scheduler], cs_aliases: [Volcano], parents: [batch-hpc, scheduling], source_tags: [Volcano]}
+  - {id: kai-scheduler, name: KAI Scheduler, aliases: [KAI Scheduler, KAI-Scheduler], parents: [gpu-scheduling, scheduling], source_tags: [KAI Scheduler]}
+  - {id: hami, name: HAMi, cs_aliases: [HAMi], parents: [gpu-scheduling], source_tags: [HAMi]}
+  - {id: jobset, name: JobSet / LeaderWorkerSet, aliases: [JobSet, LeaderWorkerSet], cs_aliases: [LWS], parents: [batch-hpc]}
+  - {id: karpenter, name: Karpenter, aliases: [Karpenter], parents: [autoscaling]}
+  - {id: keda, name: KEDA, cs_aliases: [KEDA], parents: [autoscaling, serverless]}
+  - {id: knative, name: Knative, aliases: [Knative], parents: [serverless]}
+  - {id: nvidia-dynamo, name: NVIDIA Dynamo, aliases: [NVIDIA Dynamo], parents: [model-serving]}
+  - {id: sglang, name: SGLang, aliases: [SGLang], parents: [model-serving]}
+  - {id: triton, name: Triton Inference Server, aliases: [Triton Inference Server, NVIDIA Triton], parents: [model-serving]}
+  - {id: ollama, name: Ollama, aliases: [Ollama], parents: [model-serving]}
+  - {id: pytorch, name: PyTorch, aliases: [PyTorch], parents: [model-training]}
+  - {id: nvidia-gpu-operator, name: NVIDIA GPU Operator, aliases: [GPU Operator, NVIDIA GPU Operator], parents: [gpu]}
+  - {id: kagent, name: kagent, aliases: [kagent], parents: [agentic-ai], source_tags: [Kagent]}
+  - {id: langchain, name: LangChain, aliases: [LangChain, LangGraph], parents: [agentic-ai]}
+  - {id: kitops, name: KitOps, aliases: [KitOps, ModelKit, ModelKits, ModelPack], parents: [mlops], source_tags: [KitOps]}
+  - {id: argo, name: Argo, aliases: [Argo CD, ArgoCD, Argo Workflows, Argo Rollouts, Argo Events], cs_aliases: [Argo], parents: [gitops, ci-cd], source_tags: [Argo]}
+  - {id: flux, name: Flux, aliases: [FluxCD, Flux CD], cs_aliases: [Flux], parents: [gitops], source_tags: [Flux]}
+  - {id: helm, name: Helm, aliases: [Helm chart, Helm charts], cs_aliases: [Helm], source_tags: [Helm]}
+  - {id: backstage, name: Backstage, aliases: [Backstage], parents: [platform-engineering], source_tags: [Backstage]}
+  - {id: crossplane, name: Crossplane, aliases: [Crossplane], parents: [platform-engineering], source_tags: [Crossplane]}
+  - {id: kro, name: kro, aliases: [Kube Resource Orchestrator], cs_aliases: [kro, KRO], parents: [platform-engineering]}
+  - {id: openchoreo, name: OpenChoreo, aliases: [OpenChoreo], parents: [platform-engineering], source_tags: [OpenChoreo]}
+  - {id: kpt, name: kpt, cs_aliases: [kpt], source_tags: [kpt]}
+  - {id: cilium, name: Cilium, aliases: [Cilium, Hubble], parents: [networking, ebpf], source_tags: [Cilium]}
+  - {id: calico, name: Calico, aliases: [Calico], parents: [networking]}
+  - {id: istio, name: Istio, aliases: [Istio], parents: [service-mesh], source_tags: [Istio, Istio Day]}
+  - {id: linkerd, name: Linkerd, aliases: [Linkerd], parents: [service-mesh], source_tags: [Linkerd]}
+  - {id: envoy, name: Envoy, aliases: [Envoy, Envoy Gateway, Envoy proxy, Envoy AI Gateway], parents: [networking, api-gateways], source_tags: [Envoy, EnvoyCon]}
+  - {id: kgateway, name: kgateway, aliases: [kgateway], parents: [api-gateways], source_tags: [Kgateway]}
+  - {id: emissary, name: Emissary-ingress, aliases: [Emissary-ingress], parents: [api-gateways], source_tags: [Emissary-ingress]}
+  - {id: coredns, name: CoreDNS, aliases: [CoreDNS], parents: [networking], source_tags: [CoreDNS]}
+  - {id: ovn-kubernetes, name: OVN-Kubernetes, aliases: [OVN-Kubernetes], cs_aliases: [OVN], parents: [networking], source_tags: [OVN-Kubernetes]}
+  - {id: k8gb, name: k8gb, aliases: [k8gb], parents: [multi-cluster], source_tags: [k8gb]}
+  - {id: prometheus, name: Prometheus, aliases: [Prometheus, PromQL], parents: [observability]}
+  - {id: opentelemetry, name: OpenTelemetry, aliases: [OpenTelemetry, OTel, OTLP], parents: [observability], source_tags: [OpenTelemetry]}
+  - {id: jaeger, name: Jaeger, aliases: [Jaeger], parents: [observability], source_tags: [Jaeger]}
+  - {id: grafana, name: Grafana, aliases: [Grafana, Grafana Loki, Grafana Tempo, Mimir], parents: [observability]}
+  - {id: thanos, name: Thanos, aliases: [Thanos], parents: [observability]}
+  - {id: cortex, name: Cortex, cs_aliases: [Cortex], parents: [observability], source_tags: [Cortex]}
+  - {id: fluentd, name: Fluentd / Fluent Bit, aliases: [Fluentd, Fluent Bit, FluentBit], parents: [observability], source_tags: [Fluentd]}
+  - {id: perses, name: Perses, aliases: [Perses], parents: [observability]}
+  - {id: kepler, name: Kepler, cs_aliases: [Kepler], parents: [sustainability], source_tags: [Kepler]}
+  - {id: opencost, name: OpenCost, aliases: [OpenCost], parents: [cost-finops], source_tags: [OpenCost]}
+  - {id: inspektor-gadget, name: Inspektor Gadget, aliases: [Inspektor Gadget], parents: [observability, ebpf], source_tags: [Inspektor Gadget]}
+  - {id: falco, name: Falco, aliases: [Falco], parents: [runtime-security], source_tags: [Falco]}
+  - {id: kyverno, name: Kyverno, aliases: [Kyverno], parents: [policy-as-code], source_tags: [Kyverno, KyvernoCon]}
+  - {id: opa, name: Open Policy Agent, aliases: [Open Policy Agent, Gatekeeper, Rego], cs_aliases: [OPA], parents: [policy-as-code], source_tags: [Open Policy Agent (OPA)]}
+  - {id: cedar, name: Cedar, cs_aliases: [Cedar], parents: [policy-as-code, identity-access], source_tags: [Cedar]}
+  - {id: openfga, name: OpenFGA, aliases: [OpenFGA], parents: [identity-access], source_tags: [OpenFGA]}
+  - {id: keycloak, name: Keycloak, aliases: [Keycloak], parents: [identity-access], source_tags: [Keycloak]}
+  - {id: spiffe, name: SPIFFE / SPIRE, aliases: [SPIFFE, SPIRE], parents: [identity-access], source_tags: [SPIFFE]}
+  - {id: sigstore, name: Sigstore, aliases: [Sigstore, cosign, Rekor, Fulcio], parents: [supply-chain-security]}
+  - {id: in-toto, name: in-toto, aliases: [in-toto], parents: [supply-chain-security], source_tags: [in-toto]}
+  - {id: copacetic, name: Copacetic, aliases: [Copacetic], parents: [runtime-security], source_tags: [Copacetic]}
+  - {id: trivy, name: Trivy, aliases: [Trivy], parents: [runtime-security]}
+  - {id: kubescape, name: Kubescape, aliases: [Kubescape], parents: [runtime-security]}
+  - {id: cert-manager, name: cert-manager, aliases: [cert-manager], parents: [identity-access]}
+  - {id: oscal-compass, name: OSCAL Compass, aliases: [OSCAL Compass, OSCAL], parents: [compliance], source_tags: [OSCAL Compass]}
+  - {id: containerd, name: containerd, aliases: [containerd], parents: [containers], source_tags: [Containerd]}
+  - {id: cri-o, name: CRI-O, aliases: [CRI-O], parents: [containers], source_tags: [cri-o]}
+  - {id: podman, name: Podman, aliases: [Podman, Buildah], parents: [containers], source_tags: [Podman Container Tools]}
+  - {id: lima, name: Lima, cs_aliases: [Lima], parents: [developer-experience], source_tags: [Lima]}
+  - {id: etcd, name: etcd, aliases: [etcd], parents: [kubernetes-api], source_tags: [etcd]}
+  - {id: harbor, name: Harbor, cs_aliases: [Harbor], parents: [oci], source_tags: [Harbor]}
+  - {id: oras, name: ORAS, cs_aliases: [ORAS], parents: [oci], source_tags: [ORAS]}
+  - {id: dragonfly, name: Dragonfly, cs_aliases: [Dragonfly], parents: [oci], source_tags: [Dragonfly]}
+  - {id: rook, name: Rook, aliases: [Ceph], cs_aliases: [Rook], parents: [storage], source_tags: [Rook]}
+  - {id: longhorn, name: Longhorn, cs_aliases: [Longhorn], parents: [storage], source_tags: [Longhorn]}
+  - {id: velero, name: Velero, aliases: [Velero], parents: [storage], source_tags: [Velero]}
+  - {id: vitess, name: Vitess, aliases: [Vitess], parents: [data-on-kubernetes], source_tags: [Vitess]}
+  - {id: postgres, name: PostgreSQL / CloudNativePG, aliases: [CloudNativePG, CNPG, PostgreSQL, Postgres], parents: [data-on-kubernetes]}
+  - {id: kafka, name: Apache Kafka, aliases: [Kafka], parents: [data-on-kubernetes]}
+  - {id: strimzi, name: Strimzi, aliases: [Strimzi], parents: [data-on-kubernetes, kafka], source_tags: [Strimzi]}
+  - {id: spark, name: Apache Spark, aliases: [Apache Spark], cs_aliases: [Spark], parents: [data-on-kubernetes, batch-hpc]}
+  - {id: openeverest, name: OpenEverest, aliases: [OpenEverest], parents: [data-on-kubernetes], source_tags: [OpenEverest]}
+  - {id: kubevirt, name: KubeVirt, aliases: [KubeVirt], parents: [virtualization], source_tags: [KubeVirt, KubeVirt Summit]}
+  - {id: kubeedge, name: KubeEdge, aliases: [KubeEdge], parents: [edge-computing], source_tags: [KubeEdge]}
+  - {id: k3s, name: K3s, aliases: [K3s], parents: [edge-computing], source_tags: [K3s]}
+  - {id: k0s, name: k0s, aliases: [k0s], source_tags: [k0s]}
+  - {id: kairos, name: Kairos, cs_aliases: [Kairos], parents: [edge-computing], source_tags: [Kairos]}
+  - {id: flatcar, name: Flatcar Container Linux, aliases: [Flatcar], source_tags: [Flatcar Container Linux]}
+  - {id: talos, name: Talos Linux, aliases: [Talos Linux], cs_aliases: [Talos]}
+  - {id: metal3, name: Metal3, aliases: [Metal3, Metal3.io, metal-cubed], parents: [cluster-lifecycle], source_tags: [Metal3.io]}
+  - {id: cluster-api, name: Cluster API, aliases: [Cluster API], cs_aliases: [CAPI], parents: [cluster-lifecycle]}
+  - {id: karmada, name: Karmada, aliases: [Karmada], parents: [multi-cluster], source_tags: [Karmada]}
+  - {id: open-cluster-management, name: Open Cluster Management, aliases: [Open Cluster Management], parents: [multi-cluster], source_tags: [Open Cluster Management]}
+  - {id: kubestellar, name: KubeStellar, aliases: [KubeStellar], parents: [multi-cluster], source_tags: [KubeStellar]}
+  - {id: dapr, name: Dapr, aliases: [Dapr], parents: [developer-experience], source_tags: [Dapr]}
+  - {id: tekton, name: Tekton, aliases: [Tekton], parents: [ci-cd], source_tags: [Tekton]}
+  - {id: buildpacks, name: Cloud Native Buildpacks, aliases: [Buildpacks, Cloud Native Buildpacks], parents: [ci-cd], source_tags: [Buildpacks]}
+  - {id: openfeature, name: OpenFeature, aliases: [OpenFeature, feature flags, feature flagging], parents: [ci-cd], source_tags: [OpenFeature]}
+  - {id: openkruise, name: OpenKruise, aliases: [OpenKruise], parents: [operators], source_tags: [OpenKruise]}
+  - {id: operator-framework, name: Operator Framework, aliases: [Operator Framework, Operator SDK], cs_aliases: [OLM], parents: [operators]}
+  - {id: litmus, name: LitmusChaos, aliases: [LitmusChaos], cs_aliases: [Litmus], parents: [reliability], source_tags: [Litmus]}
+  - {id: chaos-mesh, name: Chaos Mesh, aliases: [Chaos Mesh], parents: [reliability]}
+  - {id: kube-burner, name: kube-burner, aliases: [kube-burner], parents: [performance], source_tags: [kube-burner]}
+  - {id: meshery, name: Meshery, aliases: [Meshery], parents: [platform-engineering], source_tags: [Meshery]}
+  - {id: headlamp, name: Headlamp, aliases: [Headlamp], parents: [developer-experience]}
+  - {id: cadence, name: Cadence Workflow, aliases: [Cadence Workflow], cs_aliases: [Cadence], parents: [workload-orchestration], source_tags: [Cadence Workflow]}
+  - {id: atlantis, name: Atlantis, cs_aliases: [Atlantis], parents: [gitops], source_tags: [Atlantis]}
+  - {id: opentofu, name: OpenTofu / Terraform, aliases: [OpenTofu, Terraform], parents: [platform-engineering]}
+  - {id: wasmcloud, name: wasmCloud / SpinKube, aliases: [wasmCloud, SpinKube], parents: [webassembly]}
+  - {id: cohdi, name: CoHDI, cs_aliases: [CoHDI], parents: [hardware-accelerators], source_tags: [CoHDI]}
+  - {id: hive-commons, name: Hive Commons, aliases: [Hive Commons], source_tags: [Hive Commons]}
+  - {id: ai-gateway-wg, name: AI Gateway Working Group, aliases: [AI Gateway Working Group, WG AI Gateway], parents: [api-gateways], source_tags: [AI Gateway]}

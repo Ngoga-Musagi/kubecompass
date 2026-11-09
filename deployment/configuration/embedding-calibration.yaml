@@ -1,0 +1,27 @@
+# Similarity thresholds are model-specific: cosine scores from different embedding models live on
+# different scales. Values were MEASURED on the KubeCon NA 2026 data (2026-11-09); re-measure when
+# you change model (see docs/SEARCH_DESIGN.md "Embedding calibration").
+#
+#   query_floor / query_ceiling   rescale query→session cosine to 0..1 for recommendation scoring
+#   coverage_min                  assistant: top query→session cosine needed to answer at all
+#   related_floor / related_ceiling  rescale session↔session cosine for RELATED_TO edges
+#   alternative_min               agenda alternatives: "similar abstract" cutoff (~p99)
+models:
+  "BAAI/bge-small-en-v1.5":
+    # session↔session: median 0.657, p90 0.747, p99 0.82; on-topic queries 0.76–0.83, off-topic 0.56–0.62
+    query_floor: 0.60
+    query_ceiling: 0.85
+    coverage_min: 0.70
+    related_floor: 0.70
+    related_ceiling: 0.90
+    alternative_min: 0.82
+  "elastic:.jina-embeddings-v3":
+    # session↔session: median 0.257, p90 0.419, p95 0.469, p99 0.584, p99.9 0.78;
+    # on-topic queries 0.46–0.70, off-topic 0.12–0.22
+    query_floor: 0.25
+    query_ceiling: 0.65
+    coverage_min: 0.35
+    related_floor: 0.43
+    related_ceiling: 0.78
+    alternative_min: 0.58
+default: "BAAI/bge-small-en-v1.5"
