@@ -180,6 +180,16 @@ class ConferenceOut(BaseModel):
     source_system: str
 
 
+class IdentityIn(BaseModel):
+    handle: str = Field(min_length=1, max_length=254, description="Email address or username")
+
+
+class IdentityOut(BaseModel):
+    attendee_id: str
+    kind: Literal["email", "username"]
+    display: str
+
+
 class HealthOut(BaseModel):
     status: Literal["ok", "degraded"]
     elasticsearch: str

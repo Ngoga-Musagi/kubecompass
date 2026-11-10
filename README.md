@@ -217,7 +217,10 @@ Elastic Cloud.
   public-safety checklist: a least-privilege Elastic key, AI budget caps and rate limiting.
 
 ## Accessibility and inclusion
-- No sign-up: guest mode uses an anonymous browser ID, and no personal data is collected.
+- No sign-up needed. To keep your interests and agenda across devices, add an **email or a username**
+  (sidebar → *Add email or username*); a username works just as well if you'd rather not share an email.
+  The server never stores the handle, only a one-way HMAC-derived ID. Without one, your session
+  belongs to that browser tab only, so the next visitor never sees it.
 - All times are shown in the venue's time zone (`America/Denver`) with the zone label, so remote and
   international attendees aren't confused by their device time zone.
 - Keyboard-first: ⌘K/Ctrl K search, visible focus rings, ARIA labels and live regions, and
@@ -232,9 +235,9 @@ cd backend && uv run ruff check app tests && uv run mypy app && uv run pytest te
 cd frontend && npm run typecheck && npm run lint && npm test
 cd frontend && npx playwright install chromium && npx playwright test   # needs a running stack
 ```
-Latest run: **63 backend tests** (unit + integration against real Elasticsearch), **12 frontend unit
-tests**, and **6 Playwright journeys** on desktop and mobile. All pass against the local stack, the
-Elastic Cloud stack and the single deploy container. ruff and mypy are clean.
+Latest run: **75 backend tests** (unit + integration against real Elasticsearch), **12 frontend unit
+tests**, and **8 Playwright tests** (the attendee journey, graph, assistant and per-user
+personalization) on desktop and mobile. All pass against the single deploy container. ruff and mypy are clean.
 
 ## Data
 The data is the official public Sessionize feeds for KubeCon + CloudNativeCon NA 2026 (event
@@ -256,7 +259,7 @@ Ollama model) to phrase answers. Every answer must cite indexed records.
 - The search-evaluation labels were produced with AI assistance (12 queries), not independent human judges.
 - Topic extraction is vocabulary-based, so concepts outside `deployment/configuration/vocabulary/` aren't linked.
 - Sessionize has no public per-session URL for these ids, so links point to the official schedule.
-- Guest mode only: there's no cross-device sync, and change notices appear in the app rather than as push notifications.
+- Email/username personalization has no password: anyone who enters the same handle sees the same agenda. Change notices appear in the app, not as push notifications.
 - Security is disabled on the local Compose Elasticsearch, which is for development only. Elastic Cloud is secured.
 
 ## License

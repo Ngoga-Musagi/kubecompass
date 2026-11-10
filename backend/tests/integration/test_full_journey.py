@@ -182,3 +182,27 @@ def test_validation_and_admin_protection(client):
         "/api/admin/ingestion/status", headers={"Authorization": "Bearer test-admin-token"}
     )
     assert ok.status_code == 200 and ok.json()["state"] == "succeeded"
+
+
+def test_identity_separates_attendees(client):
+    r = client.post("/api/identity", json={"handle": "Judge@Example.com"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["kind"] == "email" and body["display"] == "ju•••@example.com"
+    again = client.post("/api/identity", json={"handle": "  judge@example.COM"}).json()
+    assert again["attendee_id"] == body["attendee_id"]
+    other = client.post("/api/identity", json={"handle": "another_user"}).json()
+    assert other["attendee_id"] != body["attendee_id"]
+    bad = client.post("/api/identity", json={"handle": "a b"})
+    assert bad.status_code == 422 and bad.json()["error"]["code"] == "invalid_handle"
+
+    # Agendas are isolated per identity.
+    sid = client.get("/api/sessions", params={"limit": 1}).json()["items"][0]["id"]
+    me = {"X-Guest-Id": body["attendee_id"]}
+    you = {"X-Guest-Id": other["attendee_id"]}
+    add = client.post("/api/agenda/sessions", json={"session_id": sid}, headers=me)
+    assert add.status_code == 201
+    mine = client.get("/api/agenda", headers=me).json()
+    theirs = client.get("/api/agenda", headers=you).json()
+    assert mine["total"] == 1 and theirs["total"] == 0
+

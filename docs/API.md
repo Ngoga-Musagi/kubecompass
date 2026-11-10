@@ -1,7 +1,8 @@
 # API
 
 Base: `http://localhost:8000`. OpenAPI: `/docs`. All endpoints accept `?conference=<id>`
-(default from settings). Attendee endpoints require `X-Guest-Id: <uuid>`.
+(default from settings). Attendee endpoints require `X-Guest-Id: <uuid>`: either a random
+per-tab id, or the personal id from `POST /api/identity`.
 Errors: `{"error": {"code": "...", "message": "..."}}` with 400/401/403/404/409/422/429/503.
 
 | Method | Path | Purpose |
@@ -14,6 +15,7 @@ Errors: `{"error": {"code": "...", "message": "..."}}` with 400/401/403/404/409/
 | GET | `/api/speakers` | hybrid speaker search `q`, `entity`, paging |
 | GET | `/api/speakers/{id}` | bio, sessions, works-on (with origin), co-presenters |
 | POST | `/api/discovery/intent` | `{text, save}` → `InterestProfile` (rules or LLM, grounded) |
+| POST | `/api/identity` | `{handle}` (email or username) → `{attendee_id, kind, display}`: a stable HMAC-derived id; the handle is never stored (rate-limited) |
 | GET / PUT | `/api/profile` | read / replace the guest's profile |
 | POST | `/api/discovery/search` | `{query, filters, mode: keyword|vector|hybrid|hybrid_native, offset, limit}` → hits with BM25/vector ranks, highlights, facets, `degraded` |
 | GET | `/api/discovery/suggest?q=` | autocomplete: sessions, speakers, entities |

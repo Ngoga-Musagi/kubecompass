@@ -17,6 +17,7 @@ import { usePathname } from "next/navigation";
 import * as React from "react";
 
 import { CommandSearch } from "@/components/layout/command-search";
+import { IdentityControl } from "@/components/layout/identity-control";
 import { Logo } from "@/components/layout/logo";
 import { Tooltip } from "@/components/ui/primitives";
 import { useConference } from "@/hooks/use-conference";
@@ -157,6 +158,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <NavLinks onNavigate={() => setMobileOpen(false)} />
       <div className="mt-auto flex flex-col gap-3">
         <Freshness />
+        <IdentityControl onDone={() => setMobileOpen(false)} />
         <button
           onClick={toggle}
           className="flex h-8 items-center gap-2 rounded-lg px-2 text-[12.5px] text-ink-3 hover:bg-surface-2 hover:text-ink"

@@ -23,7 +23,7 @@ spec:
             - {name: http, containerPort: 7860}
           envFrom:
             - configMapRef: {name: kubecompass-config}
-            - secretRef: {name: kubecompass-secrets} # KUBECOMPASS_ES_URL, KUBECOMPASS_ES_API_KEY, OPENAI_API_KEY
+            - secretRef: {name: kubecompass-secrets} # KUBECOMPASS_ES_URL, KUBECOMPASS_ES_API_KEY, OPENAI_API_KEY, KUBECOMPASS_IDENTITY_SECRET
           readinessProbe:
             httpGet: {path: /api/health, port: http}
             initialDelaySeconds: 10

@@ -20,6 +20,10 @@ services:
         sync: false
       - key: OPENAI_API_KEY
         sync: false
+      # Turns an email/username into a personal attendee id (HMAC). Generated once by Render;
+      # keep it stable, or everyone loses access to their saved agenda.
+      - key: KUBECOMPASS_IDENTITY_SECRET
+        generateValue: true
       # Non-secret settings.
       - key: KUBECOMPASS_EMBEDDING_PROVIDER
         value: elastic

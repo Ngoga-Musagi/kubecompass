@@ -6,6 +6,7 @@ import type {
   EntityDetail,
   GraphResponse,
   Health,
+  IdentityOut,
   IntentResponse,
   InterestProfile,
   Page,
@@ -90,6 +91,8 @@ const enc = encodeURIComponent;
 
 export const api = {
   health: () => request<Health>("/api/health"),
+  identify: (handle: string) =>
+    request<IdentityOut>("/api/identity", { method: "POST", body: JSON.stringify({ handle }) }),
   conferences: () => request<ConferenceInfo[]>("/api/conferences"),
   conference: (id: string) => request<ConferenceInfo>(`/api/conferences/${enc(id)}`),
 

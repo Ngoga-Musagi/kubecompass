@@ -91,6 +91,11 @@ class Settings(BaseSettings):
     admin_token: SecretStr | None = Field(
         default=None, description="Bearer token required for /api/admin/*. Unset = admin disabled."
     )
+    identity_secret: SecretStr | None = Field(
+        default=None,
+        description="Server secret that turns an email/username into a personal attendee id "
+        "(HMAC). Keep it stable: changing it detaches everyone from their saved data.",
+    )
     cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
     rate_limit_per_minute: int = 30
     allow_remote_refresh: bool = True

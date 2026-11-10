@@ -10,7 +10,7 @@ kind create cluster --name kubecompass && kind load docker-image kubecompass-app
 kubectl create namespace kubecompass
 kubectl -n kubecompass create secret generic kubecompass-secrets \
   --from-literal=KUBECOMPASS_ES_URL=... --from-literal=KUBECOMPASS_ES_API_KEY=... \
-  --from-literal=OPENAI_API_KEY=...          # or --from-env-file with a clean KEY=VALUE file
+  --from-literal=OPENAI_API_KEY=... \n  --from-literal=KUBECOMPASS_IDENTITY_SECRET="$(openssl rand -hex 32)"   # keep stable
 kubectl apply -k deployment/kubernetes
 kubectl -n kubecompass port-forward svc/kubecompass 7860:80   # http://localhost:7860
 ```

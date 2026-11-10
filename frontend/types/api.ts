@@ -361,3 +361,9 @@ export interface Suggestions {
   speakers: { id: string; full_name: string; company: string | null }[];
   entities: { id: string; type: EntityType; name: string; session_count: number }[];
 }
+
+export interface IdentityOut {
+  attendee_id: string;
+  kind: "email" | "username";
+  display: string;
+}

@@ -5,15 +5,22 @@ from __future__ import annotations
 from collections import Counter
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.deps import ConferenceDep, ContainerDep, OptionalAttendeeDep, ReadModelDep
+from app.api.deps import (
+    ConferenceDep,
+    ContainerDep,
+    OptionalAttendeeDep,
+    ReadModelDep,
+    rate_limit,
+)
 from app.config.conferences import (
     ConferenceConfig,
     UnknownConferenceError,
     get_conference,
     load_conferences,
 )
+from app.domain.identity import InvalidHandle, attendee_id_for, masked, normalize_handle
 from app.infrastructure.elasticsearch import es_call
 from app.ingestion.snapshot import SnapshotStore
 from app.knowledge_graph.store import ConferenceReadModel
@@ -22,6 +29,8 @@ from app.schemas.api import (
     EntityRefOut,
     FacetValue,
     HealthOut,
+    IdentityIn,
+    IdentityOut,
     Page,
     SessionDetail,
     SessionSummary,
@@ -33,6 +42,24 @@ from app.services.container import Container
 from app.services.presenters import session_detail, session_summary, speaker_brief, speaker_out
 
 router = APIRouter(prefix="/api")
+
+
+@router.post("/identity", response_model=IdentityOut, dependencies=[Depends(rate_limit)])
+def identity(body: IdentityIn, container: ContainerDep) -> IdentityOut:
+    """Turn an email or username into a personal attendee id (the handle is never stored)."""
+    try:
+        handle, kind = normalize_handle(body.handle)
+    except InvalidHandle as exc:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"code": "invalid_handle", "message": str(exc)},
+        ) from exc
+    secret = container.settings.identity_secret
+    return IdentityOut(
+        attendee_id=attendee_id_for(handle, secret.get_secret_value().encode() if secret else None),
+        kind=kind,
+        display=masked(handle, kind),
+    )
 
 
 @router.get("/health", response_model=HealthOut)

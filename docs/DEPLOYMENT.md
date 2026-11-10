@@ -72,7 +72,8 @@ inline comments): `KUBECOMPASS_ES_URL`, `KUBECOMPASS_ES_API_KEY`, `KUBECOMPASS_E
 `KUBECOMPASS_ELASTIC_EMBEDDING_INFERENCE_ID=.jina-embeddings-v3`, `KUBECOMPASS_EMBEDDING_DIMENSIONS=1024`,
 `KUBECOMPASS_SEMANTIC_TEXT_INFERENCE_ID=.jina-embeddings-v3`, `OPENAI_API_KEY`,
 `KUBECOMPASS_LLM_PROVIDER=openai`, `KUBECOMPASS_LLM_DAILY_CALL_LIMIT=300`,
-`KUBECOMPASS_RATE_LIMIT_PER_MINUTE=10`. The container listens on `$PORT` (hosts like Cloud Run and
+`KUBECOMPASS_RATE_LIMIT_PER_MINUTE=10`, and `KUBECOMPASS_IDENTITY_SECRET` (a long random value, kept
+stable; it maps emails/usernames to attendee ids). The container listens on `$PORT` (hosts like Cloud Run and
 Render set it automatically).
 
 ## Public-access checklist
