@@ -41,7 +41,7 @@ function Inner() {
     return (
       <EmptyState
         icon={Sparkles}
-        title="Tell KubeCompass what you want to learn"
+        title="Tell conCompass what you want to learn"
         description="Recommendations are built from your interest profile."
         action={
           <Link href="/" className="inline-flex h-9 items-center rounded-[10px] bg-ink px-3.5 text-[13px] font-medium text-bg">

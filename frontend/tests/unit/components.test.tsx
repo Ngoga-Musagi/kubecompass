@@ -125,7 +125,7 @@ describe("ProfilePanel", () => {
   };
   it("renders every profile dimension and opens the editor", async () => {
     wrap(<ProfilePanel profile={profile} />);
-    const panel = screen.getByRole("region", { name: /what kubecompass understood/i });
+    const panel = screen.getByRole("region", { name: /what concompass understood/i });
     expect(within(panel).getByText("Autoscaling")).toBeInTheDocument();
     expect(within(panel).getByText("AI Infrastructure")).toBeInTheDocument();
     expect(within(panel).getByText("Build an AI-powered autoscaler")).toBeInTheDocument();

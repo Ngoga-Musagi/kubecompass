@@ -13,6 +13,7 @@ from typing import Any
 from elasticsearch import ApiError, Elasticsearch, NotFoundError, TransportError
 from pydantic import BaseModel, Field
 
+from app.agent.permissions import AgentSettings
 from app.infrastructure.elasticsearch import (
     SearchUnavailableError,
     alias,
@@ -42,6 +43,7 @@ class AttendeeState(BaseModel):
     guest_id: str
     profile: InterestProfile | None = None
     agenda: list[AgendaItem] = Field(default_factory=list)
+    agent: AgentSettings = Field(default_factory=AgentSettings)
     updated_at: datetime | None = None
 
 
@@ -53,6 +55,12 @@ class AttendeeStore:
     def _ensure(self) -> None:
         if not self._ready:
             es_call(ensure_state_indices, self.es)
+            # Indices created before the agent existed: add the field (idempotent).
+            es_call(
+                self.es.indices.put_mapping,
+                index=alias("attendees"),
+                properties={"agent": {"type": "object", "enabled": False}},
+            )
             self._ready = True
 
     @staticmethod
@@ -75,6 +83,9 @@ class AttendeeStore:
             agenda=[
                 AgendaItem.model_validate(i) for i in (src.get("agenda") or {}).get("items", [])
             ],
+            agent=AgentSettings.model_validate(src["agent"])
+            if src.get("agent")
+            else AgentSettings(),
             updated_at=src.get("updated_at"),
         )
 
@@ -91,6 +102,7 @@ class AttendeeStore:
                 "updated_at": state.updated_at.isoformat(),
                 "profile": state.profile.model_dump(mode="json") if state.profile else None,
                 "agenda": {"items": [i.model_dump(mode="json") for i in state.agenda]},
+                "agent": state.agent.model_dump(mode="json"),
             },
             refresh="wait_for",
         )

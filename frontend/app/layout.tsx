@@ -11,10 +11,12 @@ const serif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["nor
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono-face", display: "swap" });
 
 export const metadata: Metadata = {
-  title: { default: "KubeCompass", template: "%s · KubeCompass" },
+  title: { default: "conCompass", template: "%s · conCompass" },
   description:
-    "Tell KubeCompass what you want to learn. It finds the sessions, speakers, technologies and projects that matter at KubeCon, explains why, and helps you plan your week.",
-  icons: { icon: "/icon.svg" },
+    "conCompass is your AI event companion: tell it what you want to learn and it finds the sessions, speakers and technologies that matter, explains why, plans a conflict-free agenda and tells you where to be next.",
+  applicationName: "conCompass",
+  icons: { icon: "/icon.svg", apple: "/icon.svg" },
+  appleWebApp: { capable: true, title: "conCompass", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {

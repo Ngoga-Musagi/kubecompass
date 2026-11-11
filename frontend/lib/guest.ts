@@ -1,4 +1,4 @@
-// Who is using KubeCompass in this browser.
+// Who is using conCompass in this browser.
 //
 // - Personal: the visitor entered an email or username; the server turned it into a stable
 //   attendee id (the handle itself is never stored server-side). Same handle = same profile and

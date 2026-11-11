@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-/** KubeCompass mark: a compass rose whose needle points north-east (toward discovery). */
+/** conCompass mark: a compass rose whose needle points north-east (toward discovery). */
 export function LogoMark({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={cn("size-7", className)} aria-hidden>
@@ -18,7 +18,7 @@ export function Logo({ className }: { className?: string }) {
     <span className={cn("flex items-center gap-2", className)}>
       <LogoMark />
       <span className="font-display text-[21px] leading-none tracking-tight text-ink">
-        Kube<span className="italic text-needle-ink">Compass</span>
+        con<span className="italic text-needle-ink">Compass</span>
       </span>
     </span>
   );

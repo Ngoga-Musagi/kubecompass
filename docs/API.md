@@ -16,6 +16,10 @@ Errors: `{"error": {"code": "...", "message": "..."}}` with 400/401/403/404/409/
 | GET | `/api/speakers/{id}` | bio, sessions, works-on (with origin), co-presenters |
 | POST | `/api/discovery/intent` | `{text, save}` → `InterestProfile` (rules or LLM, grounded) |
 | POST | `/api/identity` | `{handle}` (email or username) → `{attendee_id, kind, display}`: a stable HMAC-derived id; the handle is never stored (rate-limited) |
+| GET / PUT | `/api/agent` | the event agent's status, permission catalog and recent confirmed actions / `{enabled, permissions[]}` to enable, change or revoke (disabling revokes all) |
+| DELETE | `/api/agent/memory` | forget interests and goals for this event (agenda kept) |
+| POST | `/api/agent/chat` | `{message, history?, context_session_id?, now?}` → `{reply, intent, cards[], citations[], trace[], needs_permission}`; `403 agent_disabled` until enabled (rate-limited) |
+| POST | `/api/agent/actions` | `{tool, args, confirmed: true}` runs a proposed agenda change after confirmation; re-checks permissions (`403 permission_required`), idempotent, audited (rate-limited) |
 | GET / PUT | `/api/profile` | read / replace the guest's profile |
 | POST | `/api/discovery/search` | `{query, filters, mode: keyword|vector|hybrid|hybrid_native, offset, limit}` → hits with BM25/vector ranks, highlights, facets, `degraded` |
 | GET | `/api/discovery/suggest?q=` | autocomplete: sessions, speakers, entities |

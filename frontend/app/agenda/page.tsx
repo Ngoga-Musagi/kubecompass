@@ -155,7 +155,7 @@ export default function AgendaPage() {
           variant="primary"
           disabled={!view?.total}
           onClick={() =>
-            downloadIcs(`${conference?.id ?? "agenda"}-kubecompass.ics`)
+            downloadIcs(`${conference?.id ?? "agenda"}-concompass.ics`)
               .then(() => toast({ tone: "success", title: "Calendar file downloaded", description: "Import it into Google Calendar, Outlook or Apple Calendar." }))
               .catch(() => toast({ tone: "error", title: "Export failed" }))
           }
@@ -203,7 +203,7 @@ export default function AgendaPage() {
         <EmptyState
           icon={CalendarDays}
           title="Your agenda is empty"
-          description="Add sessions from your recommendations or search. KubeCompass will flag conflicts and tight room changes."
+          description="Add sessions from your recommendations or search. conCompass will flag conflicts and tight room changes."
           action={
             <Button variant="primary" asChild>
               <Link href="/">

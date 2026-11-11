@@ -51,7 +51,7 @@ def identity(body: IdentityIn, container: ContainerDep) -> IdentityOut:
         handle, kind = normalize_handle(body.handle)
     except InvalidHandle as exc:
         raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail={"code": "invalid_handle", "message": str(exc)},
         ) from exc
     secret = container.settings.identity_secret

@@ -9,6 +9,7 @@ from elasticsearch import Elasticsearch
 
 from app.agenda.service import AgendaService
 from app.agenda.store import AttendeeStore
+from app.agent.service import AgentService
 from app.assistant.service import AssistantService
 from app.config.settings import Settings, get_settings
 from app.infrastructure.calibration import calibration_for
@@ -37,6 +38,7 @@ class Container:
     attendees: AttendeeStore
     agenda: AgendaService
     assistant: AssistantService
+    agent: AgentService
 
 
 def build_container(settings: Settings | None = None) -> Container:
@@ -66,6 +68,7 @@ def build_container(settings: Settings | None = None) -> Container:
         attendees=attendees,
         agenda=agenda,
         assistant=assistant,
+        agent=AgentService(assistant),
     )
 
 

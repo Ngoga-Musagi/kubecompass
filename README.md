@@ -1,8 +1,10 @@
-# KubeCompass
+# conCompass
 
-**Find the right talk at KubeCon + CloudNativeCon North America 2026, and know *why* it's right.**
+**Your AI event companion: an authorized agent that finds the right talks and people, plans your
+agenda and tells you where to be next, by text or voice.**
 
-KubeCon NA 2026 has 600 sessions and 712 speakers over five days. KubeCompass lets an attendee
+conCompass (formerly KubeCompass) starts with KubeCon + CloudNativeCon North America 2026: 600
+sessions and 712 speakers over five days. An attendee can
 describe what they want to learn in plain language. It then returns the sessions, speakers and
 technologies that matter, explains every match with evidence from the official schedule, and builds
 a conflict-free agenda you can export to your calendar.
@@ -19,6 +21,7 @@ and Elastic Workflows for scheduled briefings.
 
 ## Contents
 - [What it does](#what-it-does)
+- [Your event agent](#your-event-agent)
 - [How Elasticsearch is used](#how-elasticsearch-is-used)
 - [Search quality (measured)](#search-quality-measured)
 - [Architecture](#architecture)
@@ -36,13 +39,35 @@ and Elastic Workflows for scheduled briefings.
 | **Search** | Hybrid, keyword or semantic search; filters for day, format, level and track; ⌘K autocomplete; synonyms (e.g. `k8s` → Kubernetes) |
 | **Knowledge graph** | An interactive explorer of topics, technologies, CNCF projects, sessions, speakers and organizations. Every edge shows where it came from: official schedule, extracted from text (with the sentence), curated vocabulary, or inferred |
 | **My Agenda** | Detects time conflicts, tight building changes and free gaps, suggests alternatives, shows schedule-change notices, and exports `.ics` in `America/Denver` with a proper VTIMEZONE. No account is needed |
-| **Assistant** | Answers questions from the indexed data with `[S#]`/`[P#]` citations, and says so when the data doesn't cover a question. Answers without citations are discarded |
+| **My Agent** | A personal agent you enable and authorize per event. It answers grounded questions (with `[S#]`/`[P#]` citations), says what's next and where, fills free time, builds a conflict-free plan, and proposes agenda changes you confirm. Works by voice or text |
 | **Elastic agent** | The `kubecompass-guide` Agent Builder agent answers in Kibana using 8 custom tools (ES\|QL, index search, workflow) |
 
 | | |
 |---|---|
 | ![Knowledge graph](docs/images/graph.png) | ![My agenda](docs/images/agenda.png) |
 | ![Grounded assistant](docs/images/assistant.png) | ![Mobile](docs/images/mobile.png) |
+
+## Your event agent
+![Enabling the agent: choose what it may do](docs/images/agent-permissions.png)
+
+- **Authorized, not assumed.** The agent is off until you enable it for an event and choose its
+  permissions: read event data (always), use your interests and goals, and manage your agenda.
+  External accounts are listed but locked until integrations exist. Permissions are checked on the
+  server by every tool; you can change them, clear what it knows or turn it off at any time.
+- **Acts only with confirmation.** "Add the GPU time-slicing talk to my agenda" returns a
+  confirmation card; nothing changes until you tap **Yes, add it**. Confirmed actions are
+  idempotent and listed in your permissions panel.
+- **Time-aware.** "What should I attend next?", "Where is my next session?", "I have 30 minutes
+  free", "What's happening right now?", "Build my agenda for Wednesday", "Any conflicts?".
+- **Voice.** Push-to-talk speech input and spoken replies (browser speech APIs behind swappable
+  interfaces). There's no background listening, unclear transcripts are shown for review, and text
+  always works.
+- **Grounded.** Open questions go to the citation-checked RAG answerer; replies come with session
+  and speaker cards, and **How I got this** shows the tools used.
+- **Installable** on a phone's home screen (web app manifest).
+
+Design and permission model: [`docs/AGENT.md`](docs/AGENT.md). Audit and roadmap (Google Calendar,
+organizer workspace, Luma): [`docs/CONCOMPASS_AUDIT.md`](docs/CONCOMPASS_AUDIT.md).
 
 ## How Elasticsearch is used
 Elasticsearch is where the data lives and where every feature gets its answers.
@@ -108,10 +133,10 @@ flowchart LR
     WF --> IDX
   end
 
-  subgraph APP["🧭 KubeCompass app: one container on Render or Kubernetes"]
+  subgraph APP["🧭 conCompass app: one container on Render or Kubernetes"]
     direction TB
-    UI["🖥️ Next.js UI<br/>Discover · Search · Graph · Agenda · Assistant"]
-    API["⚡ FastAPI services<br/>hybrid BM25 + kNN + RRF<br/>PageRank ranking · agenda · grounded RAG"]
+    UI["🖥️ Next.js UI<br/>Discover · Search · Graph · Agenda · My Agent (voice)"]
+    API["⚡ FastAPI services<br/>hybrid BM25 + kNN + RRF<br/>PageRank ranking · agenda · grounded RAG<br/>event agent: permission-checked tools"]
     UI --> API
   end
 
@@ -235,9 +260,10 @@ cd backend && uv run ruff check app tests && uv run mypy app && uv run pytest te
 cd frontend && npm run typecheck && npm run lint && npm test
 cd frontend && npx playwright install chromium && npx playwright test   # needs a running stack
 ```
-Latest run: **75 backend tests** (unit + integration against real Elasticsearch), **12 frontend unit
-tests**, and **8 Playwright tests** (the attendee journey, graph, assistant and per-user
-personalization) on desktop and mobile. All pass against the single deploy container. ruff and mypy are clean.
+Latest run: **95 backend tests** (unit + integration against real Elasticsearch, including the full
+agent authorization flow), **16 frontend unit tests**, and **8 Playwright tests** (attendee journey,
+graph, event agent and per-user personalization) on desktop and mobile. All pass against the single
+deploy container. ruff and mypy are clean.
 
 ## Data
 The data is the official public Sessionize feeds for KubeCon + CloudNativeCon NA 2026 (event
@@ -259,7 +285,10 @@ Ollama model) to phrase answers. Every answer must cite indexed records.
 - The search-evaluation labels were produced with AI assistance (12 queries), not independent human judges.
 - Topic extraction is vocabulary-based, so concepts outside `deployment/configuration/vocabulary/` aren't linked.
 - Sessionize has no public per-session URL for these ids, so links point to the official schedule.
-- Email/username personalization has no password: anyone who enters the same handle sees the same agenda. Change notices appear in the app, not as push notifications.
+- Email/username personalization has no password: anyone who enters the same handle sees the same agenda (OAuth sign-in is planned with Google Calendar). Change notices appear in the app, not as push notifications.
+- Voice uses the browser's speech services: quality depends on the browser (Chrome, Edge and Safari support input; Firefox is text-only), and Chrome sends audio to its speech service.
+- The agent routes requests with rules, not an LLM planner; unusual phrasings fall back to grounded search.
+- Not built yet: Google Calendar sync, the organizer workspace and providers other than Sessionize (see the audit).
 - Security is disabled on the local Compose Elasticsearch, which is for development only. Elastic Cloud is secured.
 
 ## License

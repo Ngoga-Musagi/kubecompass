@@ -32,22 +32,22 @@ test("profiles are separated per email/username", async ({ browser, isMobile }) 
   await expect(a1.getByText(user).first()).toBeAttached();
   await a1.getByLabel("Describe what you want to learn").fill(INTENT);
   await a1.getByRole("button", { name: /plan my conference/i }).click();
-  await expect(a1.getByRole("region", { name: /what kubecompass understood/i })).toBeVisible({ timeout: 60_000 });
+  await expect(a1.getByRole("region", { name: /what concompass understood/i })).toBeVisible({ timeout: 60_000 });
 
   // Person A on device 2: same username → same profile.
   const a2 = await freshPage(browser, isMobile);
   await a2.goto("/");
   await signIn(a2, isMobile, user.toUpperCase());
-  await expect(a2.getByRole("region", { name: /what kubecompass understood/i })).toBeVisible({ timeout: 30_000 });
+  await expect(a2.getByRole("region", { name: /what concompass understood/i })).toBeVisible({ timeout: 30_000 });
 
   // Someone else (different username) and an anonymous visitor start empty.
   const b = await freshPage(browser, isMobile);
   await b.goto("/");
   await expect(b.getByLabel("Describe what you want to learn")).toBeVisible();
-  await expect(b.getByRole("region", { name: /what kubecompass understood/i })).toHaveCount(0);
+  await expect(b.getByRole("region", { name: /what concompass understood/i })).toHaveCount(0);
   await signIn(b, isMobile, `${user}_other`);
   await expect(b.getByLabel("Describe what you want to learn")).toBeVisible();
-  await expect(b.getByRole("region", { name: /what kubecompass understood/i })).toHaveCount(0);
+  await expect(b.getByRole("region", { name: /what concompass understood/i })).toHaveCount(0);
 
   // Invalid handles are explained, not accepted.
   const c = await freshPage(browser, isMobile);

@@ -1,5 +1,8 @@
 import type {
   AgendaView,
+  AgentPermission,
+  AgentReply,
+  AgentStatus,
   Alternative,
   ChatResponse,
   ConferenceInfo,
@@ -70,7 +73,7 @@ async function request<T>(path: string, init: RequestInit & { query?: Query } = 
       },
     });
   } catch {
-    throw new ApiError(0, "network", "Can't reach the KubeCompass API. Is the backend running?");
+    throw new ApiError(0, "network", "Can't reach the conCompass API. Is the backend running?");
   }
   if (!res.ok) {
     let code = "error";
@@ -91,6 +94,17 @@ const enc = encodeURIComponent;
 
 export const api = {
   health: () => request<Health>("/api/health"),
+  agent: () => request<AgentStatus>("/api/agent"),
+  setAgent: (enabled: boolean, permissions: AgentPermission[] = []) =>
+    request<AgentStatus>("/api/agent", { method: "PUT", body: JSON.stringify({ enabled, permissions }) }),
+  clearAgentMemory: () => request<AgentStatus>("/api/agent/memory", { method: "DELETE" }),
+  agentChat: (message: string, history: { role: "user" | "assistant"; content: string }[], contextSessionId?: string) =>
+    request<AgentReply>("/api/agent/chat", {
+      method: "POST",
+      body: JSON.stringify({ message, history, context_session_id: contextSessionId ?? null }),
+    }),
+  agentAction: (tool: string, args: Record<string, string>) =>
+    request<AgentReply>("/api/agent/actions", { method: "POST", body: JSON.stringify({ tool, args, confirmed: true }) }),
   identify: (handle: string) =>
     request<IdentityOut>("/api/identity", { method: "POST", body: JSON.stringify({ handle }) }),
   conferences: () => request<ConferenceInfo[]>("/api/conferences"),

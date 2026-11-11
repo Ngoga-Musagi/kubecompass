@@ -123,7 +123,7 @@ export function CommandSearch() {
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-40 animate-fade bg-black/25 backdrop-blur-[2px]" />
           <Dialog.Content className="fixed left-1/2 top-[12vh] z-50 w-[min(94vw,620px)] -translate-x-1/2 animate-rise overflow-hidden rounded-2xl border border-line bg-surface shadow-[var(--shadow-lg)]">
-            <Dialog.Title className="sr-only">Search KubeCompass</Dialog.Title>
+            <Dialog.Title className="sr-only">Search conCompass</Dialog.Title>
             <Dialog.Description className="sr-only">Find sessions, speakers, topics and technologies</Dialog.Description>
             <div className="flex items-center gap-2 border-b border-line px-4">
               <Search className="size-4 text-ink-3" />

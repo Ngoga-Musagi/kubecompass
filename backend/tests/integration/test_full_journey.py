@@ -14,6 +14,7 @@ import os
 import shutil
 import uuid
 from collections.abc import Iterator
+from itertools import pairwise
 
 import pytest
 
@@ -206,3 +207,78 @@ def test_identity_separates_attendees(client):
     theirs = client.get("/api/agenda", headers=you).json()
     assert mine["total"] == 1 and theirs["total"] == 0
 
+
+def test_agent_authorization_tools_and_confirmed_actions(client):
+    me = {"X-Guest-Id": str(uuid.uuid4())}
+    now = "2026-11-10T08:30:00-07:00"  # Tuesday morning, conference time
+
+    # Disabled by default: the agent refuses to act.
+    assert client.get("/api/agent", headers=me).json()["enabled"] is False
+    r = client.post("/api/agent/chat", json={"message": "what's next?"}, headers=me)
+    assert r.status_code == 403 and r.json()["error"]["code"] == "agent_disabled"
+
+    # Read-only grant: agenda tools are denied by the backend, with an explanation.
+    st = client.put("/api/agent", json={"enabled": True, "permissions": []}, headers=me).json()
+    assert st["permissions"] == ["read"]
+    r = client.post("/api/agent/chat", json={"message": "Where is my next session?"}, headers=me)
+    body = r.json()
+    assert body["needs_permission"] == "agenda"
+    assert any(t["status"] == "denied" for t in body["trace"])
+    act = {"tool": "add_session_to_agenda", "args": {"session_id": "x"}, "confirmed": True}
+    assert client.post("/api/agent/actions", json=act, headers=me).status_code == 403
+
+    # Full grant + goals → a conflict-free plan made of proposals (nothing saved yet).
+    client.put(
+        "/api/agent",
+        json={"enabled": True, "permissions": ["personalization", "agenda"]},
+        headers=me,
+    )
+    client.post("/api/discovery/intent", json={"text": INTENT}, headers=me)
+    plan = client.post(
+        "/api/agent/chat",
+        json={"message": "Build my agenda for Wednesday", "now": now},
+        headers=me,
+    ).json()
+    assert plan["intent"] == "build_agenda" and plan["cards"], plan["reply"]
+    picks = [c["session"] for c in plan["cards"]]
+    assert all(p["day"] == "2026-11-11" for p in picks)
+    starts = sorted((p["starts_at"], p["ends_at"]) for p in picks)
+    assert all(a[1] <= b[0] for a, b in pairwise(starts)), "plan overlaps"
+    assert client.get("/api/agenda", headers=me).json()["total"] == 0  # proposals only
+
+    # Confirming runs the action; confirming twice is idempotent; both are audited.
+    action = plan["cards"][0]["action"]
+    unconfirmed = {**action, "confirmed": False}
+    assert client.post("/api/agent/actions", json=unconfirmed, headers=me).status_code == 400
+    first = client.post("/api/agent/actions", json={**action, "confirmed": True}, headers=me)
+    assert first.status_code == 200 and first.json()["reply"] == "Added to your agenda."
+    again = client.post("/api/agent/actions", json={**action, "confirmed": True}, headers=me)
+    assert again.json()["reply"] == "Already in your agenda."
+    assert client.get("/api/agenda", headers=me).json()["total"] == 1
+    audit = client.get("/api/agent", headers=me).json()["audit"]
+    assert [a["outcome"] for a in audit[:2]] == ["already_done", "done"]
+
+    # Time-aware answers use the saved agenda and say where to go.
+    nxt = client.post(
+        "/api/agent/chat", json={"message": "Where is my next session?", "now": now}, headers=me
+    ).json()
+    assert nxt["intent"] == "next_session" and picks[0]["title"] in nxt["reply"]
+    free = client.post(
+        "/api/agent/chat",
+        json={"message": "I have 45 minutes free", "now": "2026-11-11T10:20:00-07:00"},
+        headers=me,
+    ).json()
+    assert free["intent"] == "free_time"
+    for c in free["cards"]:
+        assert c["session"]["ends_at"] <= "2026-11-11T18:05:00+00:00"
+
+    # Open questions stay grounded (no LLM in tests → retrieval-only with records).
+    ask = client.post(
+        "/api/agent/chat", json={"message": "Find something about GPU time-slicing"}, headers=me
+    ).json()
+    assert ask["intent"] == "ask" and ask["cards"]
+
+    # Memory can be cleared; disabling revokes every permission.
+    assert client.delete("/api/agent/memory", headers=me).json()["has_profile"] is False
+    off = client.put("/api/agent", json={"enabled": False}, headers=me).json()
+    assert off["enabled"] is False and off["permissions"] == []

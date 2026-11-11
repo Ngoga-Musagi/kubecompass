@@ -48,7 +48,7 @@ export function ProfilePanel({ profile, llmUsed }: { profile: InterestProfile; l
             <Sparkles className="size-3" /> Your interest profile
           </div>
           <h2 id="profile-title" className="text-[15px] font-semibold text-ink">
-            What KubeCompass understood
+            What conCompass understood
           </h2>
           <p className="mt-0.5 text-[12px] text-ink-3">
             {profile.parser === "llm" || llmUsed

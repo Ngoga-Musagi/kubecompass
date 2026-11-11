@@ -21,8 +21,8 @@ export const entityColor = (type: string) => `var(--ent-${type in ENTITY_LABEL ?
 export const ORIGIN_COPY: Record<string, { label: string; hint: string }> = {
   explicit: { label: "Official", hint: "Supplied directly by the official Sessionize schedule." },
   extracted: { label: "From text", hint: "Matched in the session or speaker text; the quoted sentence is the evidence." },
-  curated: { label: "Curated", hint: "From KubeCompass's maintained cloud-native vocabulary." },
-  inferred: { label: "Inferred", hint: "Computed by KubeCompass (similarity or co-occurrence). A likely connection, not a confirmed fact." },
+  curated: { label: "Curated", hint: "From conCompass's maintained cloud-native vocabulary." },
+  inferred: { label: "Inferred", hint: "Computed by conCompass (similarity or co-occurrence). A likely connection, not a confirmed fact." },
   ai_extracted: { label: "AI-extracted", hint: "Produced by an AI model; not confirmed." },
   verified: { label: "Verified", hint: "Confirmed against an external source." },
 };

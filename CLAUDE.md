@@ -1,8 +1,10 @@
-# KubeCompass: project guide for Claude
+# conCompass: project guide for Claude
 
-AI-native conference discovery for KubeCon + CloudNativeCon NA 2026 (and future conferences).
-An attendee describes what they want to learn; KubeCompass finds the sessions, speakers,
-technologies and projects that matter, **explains why with evidence**, and helps build an agenda.
+conCompass (formerly KubeCompass; the repo, env prefix `KUBECOMPASS_*` and storage keys keep the old
+name so deployments keep working) is an AI event companion: every attendee gets a personal,
+**authorized** agent for an event that finds the right sessions and people, **explains why with
+evidence**, plans a conflict-free agenda and says where to be next, by text or voice. First event:
+KubeCon + CloudNativeCon NA 2026 via Sessionize. Roadmap: `docs/CONCOMPASS_AUDIT.md`.
 
 ## Product principles (non-negotiable)
 1. **Real data only.** Never invent sessions, speakers, rooms, times, formats, scores or stats.
@@ -16,16 +18,24 @@ technologies and projects that matter, **explains why with evidence**, and helps
 5. **Works without an LLM.** Rules/extractive fallbacks are first-class; an LLM only enhances.
    Providers (Anthropic, OpenAI, Ollama/local) are chained in `app/infrastructure/llm.py`.
 6. **Elasticsearch is the core** search and indexed-data layer (BM25 + kNN + RRF + filters).
+7. **The agent acts only with permission and confirmation.** Permissions are per attendee per
+   event and enforced in `app/agent/tools.py`, never only in the UI. Consequential tools (agenda
+   changes, later external actions) are proposed, then run via `/api/agent/actions` after the
+   attendee confirms; they are idempotent and audited. The LLM never selects or runs tools.
+8. **Voice is push-to-talk.** No background listening; speech providers stay behind
+   `frontend/lib/voice.ts` interfaces. Agent replies are short and speakable; details go in cards.
 
 ## Architecture (see docs/ARCHITECTURE.md)
 ```
 Sessionize JSON → ingestion adapter → canonical model → vocabulary extraction + graph build
   → embeddings (FastEmbed, local) → Elasticsearch (versioned indices behind aliases)
   → FastAPI services (search · graph [NetworkX read model] · recommendations · agenda · assistant)
-  → Next.js UI
+  → event agent (intent routing → permission-checked typed tools → structured cards)
+  → Next.js UI (+ voice, installable manifest)
 ```
 - `backend/app/` – `ingestion/` (adapters, pipeline, snapshot/diff), `knowledge_graph/`,
-  `search/`, `recommendation/`, `agenda/`, `calendar/`, `assistant/`, `api/`, `infrastructure/`.
+  `search/`, `recommendation/`, `agenda/`, `calendar/`, `assistant/`, `agent/` (permissions,
+  tools, planner; see docs/AGENT.md), `api/`, `infrastructure/`.
 - `frontend/` – Next.js 15 App Router, Tailwind v4 tokens in `app/globals.css`, components by domain.
 - `deployment/configuration/` – per-conference YAML, vocabulary, ranking weights (no code changes
   needed to tune or to add a conference).
@@ -69,6 +79,7 @@ Serverless, Jina via `_inference`, Agent Builder + Workflows from `elasticsearch
 
 ## Skills & commands
 Skills: `architecture`, `frontend-design`, `sessionize-ingestion`, `elasticsearch-search`,
-`knowledge-graph`, `ai-recommendations`, `agenda-management`, `testing-quality`.
+`knowledge-graph`, `ai-recommendations`, `agenda-management`, `testing-quality`, `event-agent`,
+`voice-interaction`.
 Commands: `/plan` `/implement` `/review` `/test` `/ingest-data` `/build-graph`
 `/evaluate-search` `/audit-ui` `/release`.

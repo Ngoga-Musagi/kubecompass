@@ -162,7 +162,7 @@ export default function DiscoverPage() {
             <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-ink-2">
               {active
                 ? "Ranked from the official schedule with Elasticsearch hybrid search and the conference knowledge graph. Every match explains itself."
-                : "Describe what you're building. KubeCompass finds the sessions, speakers and technologies that matter, explains why, and helps you plan your agenda."}
+                : "Describe what you're building. conCompass finds the sessions, speakers and technologies that matter, explains why, and helps you plan your agenda."}
             </p>
           </div>
           {active && !refining && (

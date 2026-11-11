@@ -22,7 +22,7 @@ test("intent → profile → recommendations → exploration → agenda → conf
   await page.getByRole("button", { name: /plan my conference/i }).click();
 
   // Step 2: editable profile
-  const profile = page.getByRole("region", { name: /what kubecompass understood/i });
+  const profile = page.getByRole("region", { name: /what concompass understood/i });
   // Intent parsing may call an LLM (a cold local model can take ~10–20 s to load).
   await expect(profile).toBeVisible({ timeout: 60_000 });
   await expect(profile.getByText("GPU Scheduling & Sharing")).toBeVisible();
@@ -99,12 +99,43 @@ test("knowledge graph is interactive", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "eBPF", level: 2 })).toBeVisible();
 });
 
-test("assistant answers from the data and admits gaps", async ({ page }) => {
-  await page.goto("/assistant");
-  await page.getByRole("button", { name: "Are there sessions about eBPF and networking?" }).click();
-  await expect(page.getByText(/Retrieved from the official schedule|AI answer/)).toBeVisible({ timeout: 60_000 });
-  await expect(page.locator("a[href^='/sessions/']").first()).toBeVisible();
-  await page.getByLabel("Message").fill("Are there sessions about medieval pottery glazing?");
-  await page.keyboard.press("Enter");
-  await expect(page.getByText("Not found in the conference data")).toBeVisible({ timeout: 60_000 });
+test("event agent: explicit permissions, grounded answers and confirmed actions", async ({ page }) => {
+  await page.goto("/assistant"); // the old assistant route now leads to the agent
+  await expect(page).toHaveURL(/\/agent$/);
+
+  // 1. Off until the attendee enables it and chooses what it may do.
+  await expect(page.getByRole("heading", { name: /Your companion for/ })).toBeVisible();
+  await expect(page.getByLabel(/Read event information/)).toBeChecked();
+  await expect(page.getByLabel(/Connect external accounts/)).toBeDisabled();
+  await page.getByRole("button", { name: "Enable my agent" }).click();
+
+  // 2. Grounded answers with sources, rendered as cards.
+  await page.getByRole("button", { name: "Find something related to GPU scheduling" }).click();
+  await expect(page.getByText(/From the official schedule|AI wording/).first()).toBeVisible({ timeout: 60_000 });
+  await expect(page.locator("main article a[href^='/sessions/']").first()).toBeVisible();
+
+  // 3. It admits gaps instead of inventing sessions.
+  const box = page.getByLabel("Message your agent");
+  await box.fill("Are there sessions about medieval pottery glazing?");
+  await box.press("Enter");
+  await expect(page.getByText(/couldn't find sessions or speakers/i)).toBeVisible({ timeout: 60_000 });
+
+  // 4. Agenda changes are proposed, and only happen when the attendee confirms.
+  await box.fill("Add the session about GPU time-slicing to my agenda");
+  await box.press("Enter");
+  const confirm = page.getByRole("article", { name: "Confirm agenda change" });
+  await expect(confirm).toBeVisible({ timeout: 60_000 });
+  await confirm.getByRole("button", { name: /Yes, add it/ }).click();
+  await expect(page.getByText("Added to your agenda.")).toBeVisible();
+
+  // 5. Time-aware follow-up uses the saved agenda.
+  await box.fill("Show my agenda");
+  await box.press("Enter");
+  await expect(page.getByText(/You have 1 session saved/)).toBeVisible({ timeout: 60_000 });
+
+  // 6. The attendee can review and revoke permissions at any time.
+  await page.getByRole("button", { name: "Agent permissions and memory" }).click();
+  await expect(page.getByText("Recent actions you confirmed")).toBeVisible();
+  await page.getByRole("button", { name: "Turn off agent" }).click();
+  await expect(page.getByRole("button", { name: "Enable my agent" })).toBeVisible();
 });

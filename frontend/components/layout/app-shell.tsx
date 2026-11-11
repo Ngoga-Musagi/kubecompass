@@ -1,10 +1,10 @@
 "use client";
 
 import {
+  Bot,
   CalendarDays,
   Compass,
   Menu,
-  MessagesSquare,
   Moon,
   Network,
   Sparkles,
@@ -31,7 +31,7 @@ const NAV = [
   { href: "/graph", label: "Knowledge Graph", icon: Network },
   { href: "/speakers", label: "Speakers", icon: Users },
   { href: "/agenda", label: "My Agenda", icon: CalendarDays },
-  { href: "/assistant", label: "Assistant", icon: MessagesSquare },
+  { href: "/agent", label: "My Agent", icon: Bot },
 ];
 
 function useTheme() {
@@ -151,7 +151,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const sidebar = (
     <div className="flex h-full flex-col gap-5 px-3 py-4">
-      <Link href="/" className="px-1.5" aria-label="KubeCompass home">
+      <Link href="/" className="px-1.5" aria-label="conCompass home">
         <Logo />
       </Link>
       <ConferenceCard />
@@ -189,7 +189,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <button className="rounded-md p-1.5 text-ink-2 lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Open menu">
             <Menu className="size-5" />
           </button>
-          <Link href="/" className="lg:hidden" aria-label="KubeCompass home">
+          <Link href="/" className="lg:hidden" aria-label="conCompass home">
             <Logo className="[&_span:last-child]:hidden sm:[&_span:last-child]:inline" />
           </Link>
           <div className="flex min-w-0 flex-1 justify-end lg:justify-start">

@@ -367,3 +367,62 @@ export interface IdentityOut {
   kind: "email" | "username";
   display: string;
 }
+
+// ---- Event agent -------------------------------------------------------------------------------
+export type AgentPermission = "read" | "personalization" | "agenda" | "integrations" | "external_actions";
+
+export interface PermissionInfo {
+  id: AgentPermission;
+  title: string;
+  description: string;
+  available: boolean;
+  unavailable_reason: string | null;
+}
+
+export interface AgentAuditEntry {
+  at: string;
+  tool: string;
+  args: Record<string, unknown>;
+  outcome: string;
+  detail: string | null;
+}
+
+export interface AgentStatus {
+  conference_id: string;
+  enabled: boolean;
+  permissions: AgentPermission[];
+  enabled_at: string | null;
+  catalog: PermissionInfo[];
+  has_profile: boolean;
+  audit: AgentAuditEntry[];
+}
+
+export interface ProposedAction {
+  tool: string;
+  args: Record<string, string>;
+  label: string;
+  description: string;
+}
+
+export interface AgentCard {
+  type: "session" | "speaker" | "conflict" | "agenda_summary" | "action" | "notice";
+  title: string | null;
+  detail: string | null;
+  badge: string | null;
+  session: SessionSummary | null;
+  speaker: SpeakerBrief | null;
+  action: ProposedAction | null;
+  in_agenda: boolean;
+  fits_agenda: boolean | null;
+}
+
+export interface AgentReply {
+  reply: string;
+  intent: string;
+  cards: AgentCard[];
+  trace: { tool: string; status: "ok" | "denied" | "error"; detail: string | null }[];
+  needs_permission: AgentPermission | null;
+  mode: "agent" | "llm" | "retrieval_only" | "no_results";
+  citations: Citation[];
+  generated_by: string | null;
+}
