@@ -165,6 +165,18 @@ export function CalendarSection({
             </p>
           )}
           {cal.last_sync && <p className="text-[12px] text-ink-3">{lastSyncText(cal.last_sync)}</p>}
+          {cal.last_sync?.failed ? (
+            <p role="alert" className="flex gap-2 rounded-lg border border-warn/30 bg-warn-soft/60 p-2.5 text-[12.5px] text-ink-2">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warn" />
+              <span>
+                {cal.last_sync.failed} couldn&apos;t be synced
+                {cal.last_sync.error ? `: ${cal.last_sync.error}` : "."} Syncing again retries them.
+              </span>
+            </p>
+          ) : null}
+          {calendars.isError && (
+            <p className="text-[12px] text-warn">{calendars.error instanceof ApiError ? calendars.error.message : "Couldn't load your calendars."}</p>
+          )}
           <div className="flex flex-wrap gap-2">
             <Button size="sm" variant="accent" disabled={sync.isPending || status.agenda_count === 0} onClick={() => sync.mutate()}>
               {sync.isPending ? <Loader2 className="animate-spin" /> : <CalendarSync />}

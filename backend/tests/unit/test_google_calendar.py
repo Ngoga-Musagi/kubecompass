@@ -300,3 +300,26 @@ def test_autosync_needs_switch_permission_and_connection(world, monkeypatch):
     world.svc.disconnect(GUEST)
     world.state.agenda = world.state.agenda[:1]
     autosync.run_autosync(container, "c", GUEST)  # disconnected → no calls, no crash
+
+
+def test_google_reasons_are_explained(world):
+    _connect(world)
+    disabled = {
+        "error": {
+            "code": 403,
+            "status": "PERMISSION_DENIED",
+            "message": "Google Calendar API has not been used in project 1 before",
+            "errors": [{"reason": "accessNotConfigured"}],
+        }
+    }
+
+    def api_disabled(req: httpx.Request) -> httpx.Response:
+        if req.url.host == "www.googleapis.com":
+            return httpx.Response(403, json=disabled)
+        return world.google(req)
+
+    world.svc.http = GoogleHttp(httpx.MockTransport(api_disabled), backoff=())
+    res = world.svc.sync(world.rm, world.conf, world.state)
+    assert res.failed == 2 and "Google Calendar API isn't enabled" in res.message
+    with pytest.raises(CalendarError, match="isn't enabled"):
+        world.svc.calendars(GUEST)

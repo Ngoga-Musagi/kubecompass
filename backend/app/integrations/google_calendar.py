@@ -77,6 +77,7 @@ class SyncSummary(BaseModel):
     unchanged: int = 0
     failed: int = 0
     failures: list[str] = Field(default_factory=list)  # session titles
+    error: str | None = None  # Google's reason for failures, in plain language
 
     @property
     def message(self) -> str:
@@ -92,7 +93,9 @@ class SyncSummary(BaseModel):
         ]
         text = "Google Calendar: " + (", ".join(parts) if parts else "nothing to sync") + "."
         if self.failed:
-            text += f" {self.failed} couldn't be synced; syncing again will retry them."
+            text += f" {self.failed} couldn't be synced"
+            text += f": {self.error}" if self.error else "."
+            text += " Syncing again will retry them."
         return text
 
 
@@ -171,6 +174,40 @@ def event_id(conference_id: str, session_id: str, guest_id: str) -> str:
 
 
 # ---- Google HTTP -------------------------------------------------------------------------------
+_REASONS = {
+    "accessNotConfigured": "the Google Calendar API isn't enabled in the Google Cloud project. "
+    "Enable it under APIs & Services → Library → Google Calendar API, then sync again.",
+    "SERVICE_DISABLED": "the Google Calendar API isn't enabled in the Google Cloud project. "
+    "Enable it under APIs & Services → Library → Google Calendar API, then sync again.",
+    "insufficientPermissions": "Google didn't grant calendar access. Disconnect, connect again "
+    "and tick the calendar checkbox on Google's screen.",
+    "ACCESS_TOKEN_SCOPE_INSUFFICIENT": "Google didn't grant calendar access. Disconnect, connect "
+    "again and tick the calendar checkbox on Google's screen.",
+    "requiredAccessLevel": "you can't write to that calendar. Choose another one.",
+    "notFound": "that calendar wasn't found. Choose another one.",
+    "rateLimitExceeded": "Google is rate-limiting requests. Try again in a minute.",
+    "quotaExceeded": "the Google project's daily quota is used up. Try again tomorrow.",
+}
+
+
+def google_reason(resp: httpx.Response) -> str:
+    """Plain-language reason from a Google API error (status codes and reasons only)."""
+    try:
+        err = resp.json().get("error", {})
+    except ValueError:
+        err = {}
+    if not isinstance(err, dict):
+        err = {}
+    codes = [str(e.get("reason", "")) for e in err.get("errors", []) if isinstance(e, dict)]
+    codes += [str(err.get("status", ""))]
+    codes += [str(d.get("reason", "")) for d in err.get("details", []) if isinstance(d, dict)]
+    for c in codes:
+        if c in _REASONS:
+            return _REASONS[c]
+    msg = str(err.get("message") or "")[:160]
+    return f"Google answered {resp.status_code}" + (f" ({msg})" if msg else "") + "."
+
+
 @dataclass
 class GoogleHttp:
     """Thin client with retries; `transport` lets tests replace Google."""
@@ -363,7 +400,9 @@ class GoogleCalendarService:
             headers={"Authorization": f"Bearer {token}"},
         )
         if resp.status_code != 200:
-            raise CalendarError("google_error", "Couldn't load your calendars from Google.")
+            reason = google_reason(resp)
+            log.warning("google calendarList failed: %s %s", resp.status_code, reason)
+            raise CalendarError("google_error", f"Couldn't load your calendars: {reason}")
         return [
             CalendarOption(
                 id=c["id"],
@@ -458,6 +497,8 @@ class GoogleCalendarService:
             if resp.status_code not in (200, 201):
                 summary.failed += 1
                 summary.failures.append(str(body["summary"]))
+                summary.error = summary.error or google_reason(resp)
+                log.warning("google event write failed: %s %s", resp.status_code, summary.error)
                 continue
             setattr(summary, kind, getattr(summary, kind) + 1)
             conn.synced[key] = SyncRecord(
@@ -481,6 +522,7 @@ class GoogleCalendarService:
                 del conn.synced[key]
             else:
                 summary.failed += 1
+                summary.error = summary.error or google_reason(resp)
 
         conn.last_sync = summary
         self._save(guest, conn)

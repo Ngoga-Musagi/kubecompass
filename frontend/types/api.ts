@@ -408,6 +408,7 @@ export interface CalendarSyncSummary {
   unchanged: number;
   failed: number;
   failures: string[];
+  error: string | null;
 }
 
 export interface CalendarStatus {
