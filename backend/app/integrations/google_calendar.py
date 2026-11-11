@@ -252,6 +252,16 @@ class GoogleCalendarService:
             },
         )
         if resp.status_code != 200:
+            # Google's error code only (e.g. redirect_uri_mismatch, invalid_client); no secrets.
+            log.warning(
+                "google token exchange failed: %s %s",
+                resp.status_code,
+                (
+                    resp.json()
+                    if resp.headers.get("content-type", "").startswith("application/json")
+                    else {}
+                ).get("error"),
+            )
             raise CalendarError("exchange_failed", "Google didn't accept the sign-in. Try again.")
         tok = resp.json()
         granted = set(str(tok.get("scope", "")).split())

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -20,6 +21,7 @@ from app.integrations.google_calendar import (
 )
 
 router = APIRouter(prefix="/api/integrations/google")
+log = logging.getLogger(__name__)
 
 
 class ConnectOut(BaseModel):
@@ -78,14 +80,17 @@ def callback(
         return RedirectResponse(f"{base}/agent?{urlencode(params)}", status_code=303)
 
     if error or not code:
+        log.info("google callback: user did not grant access (%s)", error or "no code")
         return back(calendar="cancelled")
     try:
         body = verify_state(server_secret(container.settings), state)
         attendee = container.attendees.load(body["c"], body["g"])
         if not attendee.agent.allows(Permission.INTEGRATIONS):  # revoked while signing in
+            log.warning("google callback: integrations permission missing")
             return back(calendar="error", reason="permission_required")
         container.calendar.complete(code, state)
     except CalendarError as exc:
+        log.warning("google callback failed: %s", exc.code)
         return back(calendar="error", reason=exc.code)
     return back(calendar="connected")
 

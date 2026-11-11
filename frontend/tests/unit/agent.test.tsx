@@ -58,6 +58,8 @@ const status: AgentStatus = {
   has_profile: false,
   audit: [],
   calendar: { configured: false, connected: false, calendar_id: null, calendar_name: null, last_sync: null, synced_sessions: 0 },
+  calendar_autosync: false,
+  agenda_count: 2,
   catalog: [
     { id: "read", title: "Read event information", description: "Search.", available: true, unavailable_reason: null },
     { id: "agenda", title: "Manage my agenda", description: "Propose changes.", available: true, unavailable_reason: null },
@@ -129,18 +131,25 @@ describe("CalendarSection", () => {
     expect(screen.getByRole("button", { name: /Connect Google Calendar/ })).toBeEnabled();
   });
 
-  it("won't sync until the attendee allows acting outside conCompass", () => {
+  it("shows why a connection failed", () => {
+    const configured = { ...status, calendar: { ...status.calendar, configured: true } };
+    wrap(<CalendarSection status={configured} pending={[]} notice="Tick the calendar box." />);
+    expect(screen.getByRole("alert")).toHaveTextContent("Tick the calendar box.");
+  });
+
+  it("offers one-click allow-and-sync, and auto-sync only after allowing", () => {
     const connected: AgentStatus = {
       ...status,
       permissions: ["read", "integrations"],
       calendar: { ...status.calendar, configured: true, connected: true, calendar_id: "primary", calendar_name: "Me" },
     };
     const { unmount } = wrap(<CalendarSection status={connected} pending={[]} />);
-    expect(screen.getByRole("button", { name: /Sync my agenda now/ })).toBeDisabled();
-    expect(screen.getByText(/Allow “Act outside conCompass”/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Allow & sync my agenda now/ })).toBeEnabled();
+    expect(screen.getByLabelText(/Keep my calendar updated automatically/)).toBeDisabled();
     unmount();
     wrap(<CalendarSection status={{ ...connected, permissions: ["read", "integrations", "external_actions"] }} pending={[]} />);
-    expect(screen.getByRole("button", { name: /Sync my agenda now/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /^Sync my agenda now/ })).toBeEnabled();
+    expect(screen.getByLabelText(/Keep my calendar updated automatically/)).toBeEnabled();
     expect(screen.getByRole("button", { name: /Disconnect/ })).toBeEnabled();
   });
 });

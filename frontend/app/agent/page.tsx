@@ -8,7 +8,7 @@ import * as React from "react";
 import { AgentCards } from "@/components/agent/agent-cards";
 import { AnswerText } from "@/components/assistant/answer-text";
 import { AgentSetup, PermissionChooser } from "@/components/agent/agent-permissions";
-import { CalendarSection } from "@/components/agent/calendar-section";
+import { CALENDAR_ERRORS, CalendarSection } from "@/components/agent/calendar-section";
 import { Button } from "@/components/ui/button";
 import { Badge, ErrorState, Skeleton } from "@/components/ui/primitives";
 import { Sheet } from "@/components/ui/sheet";
@@ -64,7 +64,17 @@ function useAgentStatus() {
   return useQuery({ queryKey: ["agent", conference?.id ?? "default"], queryFn: api.agent, enabled: !!conference });
 }
 
-function AgentSettings({ status, open, onOpenChange }: { status: AgentStatus; open: boolean; onOpenChange: (o: boolean) => void }) {
+function AgentSettings({
+  status,
+  open,
+  onOpenChange,
+  calendarNotice,
+}: {
+  status: AgentStatus;
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  calendarNotice: string | null;
+}) {
   const qc = useQueryClient();
   const toast = useToast();
   const [perms, setPerms] = React.useState<AgentPermission[]>(status.permissions);
@@ -116,7 +126,7 @@ function AgentSettings({ status, open, onOpenChange }: { status: AgentStatus; op
       }
     >
       <PermissionChooser status={status} value={perms} onChange={setPerms} />
-      <CalendarSection status={status} pending={perms} />
+      <CalendarSection status={status} pending={perms} notice={calendarNotice} />
       <div className="mt-6 rounded-xl border border-line p-3">
         <p className="text-[13px] font-medium">What it knows about you</p>
         <p className="mt-0.5 text-[12.5px] text-ink-3">
@@ -218,6 +228,7 @@ export default function AgentPage() {
   const [voiceError, setVoiceError] = React.useState<string | null>(null);
   const [speaking, setSpeaking] = React.useState(false);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
+  const [calendarNotice, setCalendarNotice] = React.useState<string | null>(null);
   const [micSupported, setMicSupported] = React.useState(false);
   const endRef = React.useRef<HTMLDivElement>(null);
 
@@ -233,9 +244,14 @@ export default function AgentPage() {
     const result = params.get("calendar");
     if (!result) return;
     window.history.replaceState(null, "", window.location.pathname);
-    if (result === "connected") toast({ tone: "success", title: "Google Calendar connected", description: "Allow “Act outside conCompass”, then sync." });
-    else if (result === "cancelled") toast({ tone: "info", title: "Google Calendar wasn't connected" });
-    else toast({ tone: "error", title: "Couldn't connect Google Calendar", description: params.get("reason") ?? undefined });
+    if (result === "connected") {
+      setCalendarNotice(null);
+      toast({ tone: "success", title: "Google Calendar connected", description: "Now click “Allow & sync my agenda now”." });
+    } else {
+      const reason = result === "cancelled" ? "cancelled" : (params.get("reason") ?? "exchange_failed");
+      setCalendarNotice(CALENDAR_ERRORS[reason] ?? CALENDAR_ERRORS.exchange_failed!);
+      toast({ tone: "error", title: "Google Calendar wasn't connected" });
+    }
     void qc.invalidateQueries({ queryKey: ["agent"] });
     setSettingsOpen(true);
   }, [qc, toast]);
@@ -444,7 +460,7 @@ export default function AgentPage() {
         </form>
         {!micSupported && <p className="px-1 text-[11.5px] text-ink-4">Voice input isn&apos;t available in this browser; typing works everywhere.</p>}
       </div>
-      <AgentSettings status={st} open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <AgentSettings status={st} open={settingsOpen} onOpenChange={setSettingsOpen} calendarNotice={calendarNotice} />
     </div>
   );
 }

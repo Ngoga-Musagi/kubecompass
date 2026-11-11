@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from app.agenda.store import AttendeeState
@@ -20,6 +20,7 @@ from app.agent.service import AgentChatRequest, AgentIntent, AgentReply, Card
 from app.agent.tools import ToolContext, ToolDenied, ToolError, execute_confirmed
 from app.api.deps import AttendeeDep, ConferenceDep, ContainerDep, ReadModelDep, rate_limit
 from app.config.conferences import ConferenceConfig
+from app.integrations.autosync import autosync_enabled, run_autosync
 from app.integrations.google_calendar import CalendarStatus
 from app.knowledge_graph.store import ConferenceReadModel
 from app.services.container import Container
@@ -36,11 +37,16 @@ class AgentStatus(BaseModel):
     has_profile: bool
     audit: list[AuditEntry]
     calendar: CalendarStatus
+    calendar_autosync: bool
+    agenda_count: int
 
 
 class AgentSettingsIn(BaseModel):
     enabled: bool
     permissions: list[Permission] = Field(default_factory=list)
+    calendar_autosync: bool | None = Field(
+        default=None, description="Keep Google Calendar updated after agenda changes"
+    )
 
 
 class ActionIn(BaseModel):
@@ -67,6 +73,10 @@ def _status(container: Container, conf_id: str, state: AttendeeState) -> AgentSt
         has_profile=state.profile is not None,
         audit=list(reversed(a.audit))[:20],
         calendar=cal,
+        calendar_autosync=a.enabled
+        and a.calendar_autosync
+        and Permission.EXTERNAL_ACTIONS in perms,
+        agenda_count=len(state.agenda),
     )
 
 
@@ -108,7 +118,11 @@ def get_agent(container: ContainerDep, conf: ConferenceDep, state: AttendeeDep) 
 
 @router.put("", response_model=AgentStatus)
 def update_agent(
-    body: AgentSettingsIn, container: ContainerDep, conf: ConferenceDep, state: AttendeeDep
+    body: AgentSettingsIn,
+    container: ContainerDep,
+    conf: ConferenceDep,
+    state: AttendeeDep,
+    tasks: BackgroundTasks,
 ) -> AgentStatus:
     """Enable/disable the agent for this event and set its permissions (revocable any time)."""
     if body.enabled:
@@ -119,6 +133,12 @@ def update_agent(
             body.permissions, catalog(cal.configured, cal.connected)
         )
         state.agent.enabled_at = state.agent.enabled_at if was_enabled else datetime.now(UTC)
+        if body.calendar_autosync is not None:
+            was_on = state.agent.calendar_autosync
+            state.agent.calendar_autosync = body.calendar_autosync
+            if body.calendar_autosync and not was_on and autosync_enabled(container, state):
+                # Turning it on is the attendee's go-ahead: bring the calendar up to date now.
+                tasks.add_task(run_autosync, container, conf.id, state.guest_id)
     else:  # disabling revokes everything; the audit trail is kept for the attendee to review
         state.agent = AgentSettings(audit=state.agent.audit)
     state = container.attendees.save(state)
@@ -153,6 +173,7 @@ def run_action(
     conf: ConferenceDep,
     rm: ReadModelDep,
     state: AttendeeDep,
+    tasks: BackgroundTasks,
 ) -> AgentReply:
     """Execute a proposed action after the attendee confirmed it (re-checks permissions)."""
     _require_enabled(state)
@@ -179,6 +200,8 @@ def run_action(
             detail={"code": exc.code, "message": exc.message},
         ) from exc
     container.attendees.save(ctx.state)  # persists the audit entry (agenda already saved)
+    if body.tool != "sync_agenda_to_calendar" and autosync_enabled(container, ctx.state):
+        tasks.add_task(run_autosync, container, conf.id, ctx.state.guest_id)
     intents: dict[str, AgentIntent] = {
         "add_session_to_agenda": "add",
         "remove_session_from_agenda": "remove",

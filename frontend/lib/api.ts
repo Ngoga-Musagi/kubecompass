@@ -97,8 +97,11 @@ const enc = encodeURIComponent;
 export const api = {
   health: () => request<Health>("/api/health"),
   agent: () => request<AgentStatus>("/api/agent"),
-  setAgent: (enabled: boolean, permissions: AgentPermission[] = []) =>
-    request<AgentStatus>("/api/agent", { method: "PUT", body: JSON.stringify({ enabled, permissions }) }),
+  setAgent: (enabled: boolean, permissions: AgentPermission[] = [], calendarAutosync?: boolean) =>
+    request<AgentStatus>("/api/agent", {
+      method: "PUT",
+      body: JSON.stringify({ enabled, permissions, calendar_autosync: calendarAutosync ?? null }),
+    }),
   clearAgentMemory: () => request<AgentStatus>("/api/agent/memory", { method: "DELETE" }),
   agentChat: (message: string, history: { role: "user" | "assistant"; content: string }[], contextSessionId?: string) =>
     request<AgentReply>("/api/agent/chat", {

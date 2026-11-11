@@ -99,6 +99,7 @@ class AgentSettings(BaseModel):
     enabled: bool = False
     permissions: list[Permission] = Field(default_factory=list)
     enabled_at: datetime | None = None
+    calendar_autosync: bool = False  # keep Google Calendar updated after agenda changes
     audit: list[AuditEntry] = Field(default_factory=list)
 
     def allows(self, permission: Permission) -> bool:

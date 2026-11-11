@@ -270,3 +270,33 @@ def test_unconfigured_server_offers_nothing():
     with pytest.raises(CalendarError) as exc:
         svc.authorization_url(GUEST, "c")
     assert exc.value.code == "not_configured"
+
+
+def test_autosync_needs_switch_permission_and_connection(world, monkeypatch):
+    from app.agent.permissions import AgentSettings, Permission
+    from app.integrations import autosync
+
+    monkeypatch.setattr(autosync, "get_conference", lambda _cid: world.conf)
+    container = SimpleNamespace(
+        attendees=SimpleNamespace(load=lambda _c, _g: world.state),
+        read_models=SimpleNamespace(get=lambda _c: world.rm),
+        calendar=world.svc,
+    )
+    _connect(world)
+    perms = [Permission.READ, Permission.INTEGRATIONS]
+    world.state.agent = AgentSettings(enabled=True, permissions=perms, calendar_autosync=True)
+    autosync.run_autosync(container, "c", GUEST)  # switch on but no external_actions → nothing
+    assert world.google.events == {}
+
+    world.state.agent.permissions = [*perms, Permission.EXTERNAL_ACTIONS]
+    world.state.agent.calendar_autosync = False
+    autosync.run_autosync(container, "c", GUEST)  # permission but switch off → nothing
+    assert world.google.events == {}
+
+    world.state.agent.calendar_autosync = True
+    autosync.run_autosync(container, "c", GUEST)  # all three → both sessions synced
+    assert len(world.google.events) == 2
+
+    world.svc.disconnect(GUEST)
+    world.state.agenda = world.state.agenda[:1]
+    autosync.run_autosync(container, "c", GUEST)  # disconnected → no calls, no crash

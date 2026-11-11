@@ -396,6 +396,8 @@ export interface AgentStatus {
   has_profile: boolean;
   audit: AgentAuditEntry[];
   calendar: CalendarStatus;
+  calendar_autosync: boolean;
+  agenda_count: number;
 }
 
 export interface CalendarSyncSummary {

@@ -5,7 +5,7 @@ from __future__ import annotations
 import threading
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Response, status
 from pydantic import BaseModel, Field
 
 from app.agenda.service import AgendaError, AgendaView, Alternative
@@ -20,6 +20,7 @@ from app.api.deps import (
 )
 from app.assistant.service import ChatRequest, ChatResponse
 from app.ingestion.snapshot import IngestionStatus, SnapshotStore
+from app.integrations.autosync import autosync_enabled, run_autosync
 from app.knowledge_graph.service import UnknownEntityError
 from app.schemas.api import EntityDetail, GraphResponse
 
@@ -133,11 +134,14 @@ def add_to_agenda(
     conf: ConferenceDep,
     rm: ReadModelDep,
     attendee: AttendeeDep,
+    tasks: BackgroundTasks,
 ) -> AgendaView:
     try:
         state = container.agenda.add(rm, attendee, body.session_id, body.note)
     except AgendaError as exc:
         raise _agenda_error(exc) from exc
+    if autosync_enabled(container, state):
+        tasks.add_task(run_autosync, container, conf.id, state.guest_id)
     return container.agenda.view(rm, conf, state)
 
 
@@ -148,11 +152,14 @@ def remove_from_agenda(
     conf: ConferenceDep,
     rm: ReadModelDep,
     attendee: AttendeeDep,
+    tasks: BackgroundTasks,
 ) -> AgendaView:
     try:
         state = container.agenda.remove(attendee, session_id)
     except AgendaError as exc:
         raise _agenda_error(exc) from exc
+    if autosync_enabled(container, state):
+        tasks.add_task(run_autosync, container, conf.id, state.guest_id)
     return container.agenda.view(rm, conf, state)
 
 
