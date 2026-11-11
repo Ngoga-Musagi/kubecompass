@@ -13,7 +13,13 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api import routes_agent, routes_core, routes_discovery, routes_graph_agenda
+from app.api import (
+    routes_agent,
+    routes_core,
+    routes_discovery,
+    routes_graph_agenda,
+    routes_integrations,
+)
 from app.config.conferences import load_conferences
 from app.config.settings import get_settings
 from app.infrastructure.elasticsearch import SearchUnavailableError
@@ -125,6 +131,7 @@ def create_app() -> FastAPI:
     app.include_router(routes_discovery.router)
     app.include_router(routes_graph_agenda.router)
     app.include_router(routes_agent.router)
+    app.include_router(routes_integrations.router)
     return app
 
 

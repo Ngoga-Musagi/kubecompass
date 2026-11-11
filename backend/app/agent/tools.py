@@ -19,6 +19,7 @@ from app.agenda.service import AgendaError, AgendaService, AgendaView
 from app.agenda.store import AttendeeState
 from app.agent.permissions import AuditEntry, Permission
 from app.config.conferences import ConferenceConfig
+from app.integrations.google_calendar import CalendarError, GoogleCalendarService
 from app.knowledge_graph.service import GraphService
 from app.knowledge_graph.store import ConferenceReadModel
 from app.recommendation.service import Recommendation, RecommendationService
@@ -51,6 +52,7 @@ class ToolContext:
     graph: GraphService
     recommendations: RecommendationService
     agenda: AgendaService
+    calendar: GoogleCalendarService | None = None
 
     def summary(self, session_id: str) -> SessionSummary:
         return session_summary(self.rm.sessions[session_id], self.rm.speakers)
@@ -106,7 +108,7 @@ class AgendaSuggestion(BaseModel):
 
 class ActionResult(BaseModel):
     outcome: str  # done | already_done
-    session: SessionSummary
+    session: SessionSummary | None = None
     message: str
 
 
@@ -286,6 +288,19 @@ def remove_session_from_agenda(ctx: ToolContext, a: SessionRef) -> ActionResult:
     )
 
 
+def sync_agenda_to_calendar(ctx: ToolContext, _: NoInput) -> ActionResult:
+    """Write the agenda to the connected Google Calendar (idempotent; retries failures)."""
+    if ctx.calendar is None or not ctx.calendar.connected(ctx.state.guest_id):
+        raise ToolError(
+            "not_connected", "Connect Google Calendar in your agent's permissions first."
+        )
+    try:
+        summary = ctx.calendar.sync(ctx.rm, ctx.conf, ctx.state)
+    except CalendarError as exc:
+        raise ToolError(exc.code, exc.message) from exc
+    return ActionResult(outcome="done", message=summary.message)
+
+
 # ---- registry ----------------------------------------------------------------------------------
 @dataclass(frozen=True)
 class Tool:
@@ -377,6 +392,14 @@ TOOLS: dict[str, Tool] = {
             Permission.AGENDA,
             SessionRef,
             remove_session_from_agenda,
+            consequential=True,
+        ),
+        Tool(
+            "sync_agenda_to_calendar",
+            "Add, update and remove saved sessions in the connected Google Calendar",
+            Permission.EXTERNAL_ACTIONS,
+            NoInput,
+            sync_agenda_to_calendar,
             consequential=True,
         ),
     ]

@@ -6,6 +6,7 @@
     "updated_at": {"type": "date"},
     "profile": {"type": "object", "enabled": false},
     "agenda": {"type": "object", "enabled": false},
-    "agent": {"type": "object", "enabled": false}
+    "agent": {"type": "object", "enabled": false},
+    "integrations": {"type": "object", "enabled": false}
   }
 }

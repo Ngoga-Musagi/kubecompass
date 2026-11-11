@@ -20,6 +20,10 @@ Errors: `{"error": {"code": "...", "message": "..."}}` with 400/401/403/404/409/
 | DELETE | `/api/agent/memory` | forget interests and goals for this event (agenda kept) |
 | POST | `/api/agent/chat` | `{message, history?, context_session_id?, now?}` → `{reply, intent, cards[], citations[], trace[], needs_permission}`; `403 agent_disabled` until enabled (rate-limited) |
 | POST | `/api/agent/actions` | `{tool, args, confirmed: true}` runs a proposed agenda change after confirmation; re-checks permissions (`403 permission_required`), idempotent, audited (rate-limited) |
+| GET / DELETE | `/api/integrations/google` | calendar connection status / disconnect (revokes at Google; always allowed) |
+| POST | `/api/integrations/google/connect` | → `{auth_url}` for Google's consent screen; needs the `integrations` permission (`503 not_configured` without server credentials) |
+| GET | `/api/integrations/google/callback` | OAuth redirect target (signed state); redirects to `/agent?calendar=connected|cancelled|error` |
+| GET / PUT | `/api/integrations/google/calendars`, `/calendar` | writable calendars / `{calendar_id}` to choose one |
 | GET / PUT | `/api/profile` | read / replace the guest's profile |
 | POST | `/api/discovery/search` | `{query, filters, mode: keyword|vector|hybrid|hybrid_native, offset, limit}` → hits with BM25/vector ranks, highlights, facets, `degraded` |
 | GET | `/api/discovery/suggest?q=` | autocomplete: sessions, speakers, entities |

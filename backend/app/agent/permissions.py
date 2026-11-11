@@ -31,7 +31,7 @@ class PermissionInfo(BaseModel):
     unavailable_reason: str | None = None
 
 
-CATALOG: list[PermissionInfo] = [
+_BASE: list[PermissionInfo] = [
     PermissionInfo(
         id=Permission.READ,
         title="Read event information",
@@ -53,20 +53,38 @@ CATALOG: list[PermissionInfo] = [
     PermissionInfo(
         id=Permission.INTEGRATIONS,
         title="Connect external accounts",
-        description="Access services you connect, such as Google Calendar.",
-        available=False,
-        unavailable_reason="Coming with Google Calendar support.",
+        description="Connect your Google Calendar and see which calendars you can write to. "
+        "You can disconnect at any time; access is revoked at Google.",
     ),
     PermissionInfo(
         id=Permission.EXTERNAL_ACTIONS,
         title="Act outside conCompass",
-        description="Make changes in connected services, only within what you allow, and always "
-        "with your confirmation.",
-        available=False,
-        unavailable_reason="Requires a connected account.",
+        description="Add, update and remove your saved sessions in your connected Google "
+        "Calendar, only when you confirm a sync.",
     ),
 ]
-GRANTABLE = {p.id for p in CATALOG if p.available}
+
+
+def catalog(calendar_configured: bool, calendar_connected: bool) -> list[PermissionInfo]:
+    """Permission levels, with integration levels unlocked only when they can actually work."""
+    out = []
+    for p in _BASE:
+        if p.id == Permission.INTEGRATIONS and not calendar_configured:
+            p = p.model_copy(
+                update={
+                    "available": False,
+                    "unavailable_reason": "Google Calendar isn't set up on this server yet.",
+                }
+            )
+        elif p.id == Permission.EXTERNAL_ACTIONS and not calendar_connected:
+            p = p.model_copy(
+                update={
+                    "available": False,
+                    "unavailable_reason": "Connect Google Calendar first (in this panel).",
+                }
+            )
+        out.append(p)
+    return out
 
 
 class AuditEntry(BaseModel):
@@ -90,7 +108,10 @@ class AgentSettings(BaseModel):
         self.audit = [*self.audit, entry][-AUDIT_LIMIT:]
 
 
-def normalize_grant(requested: list[Permission]) -> list[Permission]:
+def normalize_grant(
+    requested: list[Permission], available: list[PermissionInfo]
+) -> list[Permission]:
     """READ is implied by enabling the agent; unavailable permissions are never granted."""
-    granted = {Permission.READ, *(p for p in requested if p in GRANTABLE)}
+    grantable = {p.id for p in available if p.available}
+    granted = {Permission.READ, *(p for p in requested if p in grantable)}
     return [p for p in Permission if p in granted]

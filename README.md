@@ -52,7 +52,7 @@ and Elastic Workflows for scheduled briefings.
 
 - **Authorized, not assumed.** The agent is off until you enable it for an event and choose its
   permissions: read event data (always), use your interests and goals, and manage your agenda.
-  External accounts are listed but locked until integrations exist. Permissions are checked on the
+  With Google Calendar configured, you can also connect your calendar and allow syncing. Permissions are checked on the
   server by every tool; you can change them, clear what it knows or turn it off at any time.
 - **Acts only with confirmation.** "Add the GPU time-slicing talk to my agenda" returns a
   confirmation card; nothing changes until you tap **Yes, add it**. Confirmed actions are
@@ -288,7 +288,8 @@ Ollama model) to phrase answers. Every answer must cite indexed records.
 - Email/username personalization has no password: anyone who enters the same handle sees the same agenda (OAuth sign-in is planned with Google Calendar). Change notices appear in the app, not as push notifications.
 - Voice uses the browser's speech services: quality depends on the browser (Chrome, Edge and Safari support input; Firefox is text-only), and Chrome sends audio to its speech service.
 - The agent routes requests with rules, not an LLM planner; unusual phrasings fall back to grounded search.
-- Not built yet: Google Calendar sync, the organizer workspace and providers other than Sessionize (see the audit).
+- Google Calendar sync needs a Google OAuth client ([setup](docs/GOOGLE_CALENDAR.md)); while that app is in Google's *Testing* mode only listed test users can connect.
+- Not built yet: the organizer workspace and providers other than Sessionize (see the audit).
 - Security is disabled on the local Compose Elasticsearch, which is for development only. Elastic Cloud is secured.
 
 ## License

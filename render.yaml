@@ -24,6 +24,13 @@ services:
       # keep it stable, or everyone loses access to their saved agenda.
       - key: KUBECOMPASS_IDENTITY_SECRET
         generateValue: true
+      # Google Calendar (optional; see docs/GOOGLE_CALENDAR.md). All three are needed.
+      - key: KUBECOMPASS_GOOGLE_CLIENT_ID
+        sync: false
+      - key: KUBECOMPASS_GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: KUBECOMPASS_PUBLIC_BASE_URL
+        sync: false
       # Non-secret settings.
       - key: KUBECOMPASS_EMBEDDING_PROVIDER
         value: elastic

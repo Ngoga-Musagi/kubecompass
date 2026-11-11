@@ -38,11 +38,18 @@ AgentIntent = Literal[
     "add",
     "remove",
     "recommend",
+    "calendar_sync",
     "ask",
 ]
 
 _DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
 _RULES: list[tuple[AgentIntent, re.Pattern[str]]] = [
+    (
+        "calendar_sync",
+        re.compile(
+            r"\b(sync|synchroni[sz]e)\b|\bgoogle calendar\b|\b(to|in|into) my calendar\b", re.I
+        ),
+    ),
     (
         "conflicts",
         re.compile(r"\b(conflicts?|overlap(s|ping)?|clash(es)?|double[- ]booked)\b", re.I),
@@ -440,6 +447,42 @@ class AgentService:
         )
         return AgentReply(intent=intent, reply=text, cards=[card])
 
+    def _calendar_sync(self, ctx: ToolContext, req: AgentChatRequest, call: Call) -> AgentReply:
+        cal = ctx.calendar
+        if cal is None or not cal.configured:
+            return AgentReply(
+                intent="calendar_sync",
+                reply="Google Calendar isn't set up on this server yet. "
+                "You can download your agenda as a calendar file from My Agenda instead.",
+            )
+        if not ctx.state.agent.allows(Permission.INTEGRATIONS) or not cal.connected(
+            ctx.state.guest_id
+        ):
+            raise ToolDenied("sync_agenda_to_calendar", Permission.INTEGRATIONS)
+        if not ctx.state.agent.allows(Permission.EXTERNAL_ACTIONS):
+            raise ToolDenied("sync_agenda_to_calendar", Permission.EXTERNAL_ACTIONS)
+        status = cal.status(ctx.state.guest_id)
+        n = len(ctx.state.agenda)
+        action = ProposedAction(
+            tool="sync_agenda_to_calendar",
+            args={},
+            label="Sync to Google Calendar",
+            description=f"Sync {_n(n, 'saved session')} to {status.calendar_name}",
+        )
+        card = Card(
+            type="action",
+            title="Please confirm",
+            detail=f"{_n(n, 'saved session')} → “{status.calendar_name}”. Sessions you removed "
+            "are taken off the calendar; nothing else in your calendar is touched.",
+            action=action,
+        )
+        return AgentReply(
+            intent="calendar_sync",
+            reply=f"Sync {_n(n, 'saved session')} to your Google Calendar "
+            f"“{status.calendar_name}”?",
+            cards=[card],
+        )
+
     def _recommend(self, ctx: ToolContext, req: AgentChatRequest, call: Call) -> AgentReply:
         day = self._day(ctx, req)
         hits: list[SessionHit] = call(
@@ -514,6 +557,8 @@ _DENIED = {
     "You can allow it in your agent's permissions.",
     Permission.AGENDA: "I need permission to manage your agenda for that. You can allow it in "
     "your agent's permissions; I'll still ask before every change.",
-    Permission.INTEGRATIONS: "External accounts aren't connected yet.",
-    Permission.EXTERNAL_ACTIONS: "External actions aren't available yet.",
+    Permission.INTEGRATIONS: "Connect your Google Calendar first: open Permissions, allow "
+    "“Connect external accounts” and choose Connect Google Calendar.",
+    Permission.EXTERNAL_ACTIONS: "I need permission to act in your Google Calendar. Allow "
+    "“Act outside conCompass” in your agent's permissions; I'll still ask before each sync.",
 }

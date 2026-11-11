@@ -9,17 +9,18 @@ from pydantic import BaseModel, Field
 
 from app.agenda.store import AttendeeState
 from app.agent.permissions import (
-    CATALOG,
     AgentSettings,
     AuditEntry,
     Permission,
     PermissionInfo,
+    catalog,
     normalize_grant,
 )
-from app.agent.service import AgentChatRequest, AgentReply, Card
+from app.agent.service import AgentChatRequest, AgentIntent, AgentReply, Card
 from app.agent.tools import ToolContext, ToolDenied, ToolError, execute_confirmed
 from app.api.deps import AttendeeDep, ConferenceDep, ContainerDep, ReadModelDep, rate_limit
 from app.config.conferences import ConferenceConfig
+from app.integrations.google_calendar import CalendarStatus
 from app.knowledge_graph.store import ConferenceReadModel
 from app.services.container import Container
 
@@ -34,6 +35,7 @@ class AgentStatus(BaseModel):
     catalog: list[PermissionInfo]
     has_profile: bool
     audit: list[AuditEntry]
+    calendar: CalendarStatus
 
 
 class AgentSettingsIn(BaseModel):
@@ -47,16 +49,24 @@ class ActionIn(BaseModel):
     confirmed: bool = Field(description="Must be true: the attendee confirmed this action")
 
 
-def _status(conf_id: str, state: AttendeeState) -> AgentStatus:
+def _status(container: Container, conf_id: str, state: AttendeeState) -> AgentStatus:
     a = state.agent
+    cal = container.calendar.status(state.guest_id)
+    perms = [
+        p
+        for p in a.permissions
+        # External actions only count while an account is actually connected.
+        if p != Permission.EXTERNAL_ACTIONS or cal.connected
+    ]
     return AgentStatus(
         conference_id=conf_id,
         enabled=a.enabled,
-        permissions=a.permissions if a.enabled else [],
+        permissions=perms if a.enabled else [],
         enabled_at=a.enabled_at,
-        catalog=CATALOG,
+        catalog=catalog(cal.configured, cal.connected),
         has_profile=state.profile is not None,
         audit=list(reversed(a.audit))[:20],
+        calendar=cal,
     )
 
 
@@ -76,6 +86,7 @@ def _context(
         graph=container.graph,
         recommendations=container.recommendations,
         agenda=container.agenda,
+        calendar=container.calendar,
     )
 
 
@@ -91,8 +102,8 @@ def _require_enabled(state: AttendeeState) -> None:
 
 
 @router.get("", response_model=AgentStatus)
-def get_agent(conf: ConferenceDep, state: AttendeeDep) -> AgentStatus:
-    return _status(conf.id, state)
+def get_agent(container: ContainerDep, conf: ConferenceDep, state: AttendeeDep) -> AgentStatus:
+    return _status(container, conf.id, state)
 
 
 @router.put("", response_model=AgentStatus)
@@ -103,12 +114,15 @@ def update_agent(
     if body.enabled:
         was_enabled = state.agent.enabled
         state.agent.enabled = True
-        state.agent.permissions = normalize_grant(body.permissions)
+        cal = container.calendar.status(state.guest_id)
+        state.agent.permissions = normalize_grant(
+            body.permissions, catalog(cal.configured, cal.connected)
+        )
         state.agent.enabled_at = state.agent.enabled_at if was_enabled else datetime.now(UTC)
     else:  # disabling revokes everything; the audit trail is kept for the attendee to review
         state.agent = AgentSettings(audit=state.agent.audit)
     state = container.attendees.save(state)
-    return _status(conf.id, state)
+    return _status(container, conf.id, state)
 
 
 @router.delete("/memory", response_model=AgentStatus)
@@ -116,7 +130,7 @@ def clear_memory(container: ContainerDep, conf: ConferenceDep, state: AttendeeDe
     """Forget the interests, goals and preferences for this event (agenda is kept)."""
     state.profile = None
     state = container.attendees.save(state)
-    return _status(conf.id, state)
+    return _status(container, conf.id, state)
 
 
 @router.post("/chat", response_model=AgentReply, dependencies=[Depends(rate_limit)])
@@ -165,15 +179,22 @@ def run_action(
             detail={"code": exc.code, "message": exc.message},
         ) from exc
     container.attendees.save(ctx.state)  # persists the audit entry (agenda already saved)
-    return AgentReply(
-        reply=result.message,
-        intent="add" if body.tool == "add_session_to_agenda" else "remove",
-        cards=[
+    intents: dict[str, AgentIntent] = {
+        "add_session_to_agenda": "add",
+        "remove_session_from_agenda": "remove",
+        "sync_agenda_to_calendar": "calendar_sync",
+    }
+    added = body.tool == "add_session_to_agenda"
+    cards = (
+        [
             Card(
                 type="session",
                 session=result.session,
-                in_agenda=body.tool == "add_session_to_agenda",
-                badge="Saved" if body.tool == "add_session_to_agenda" else None,
+                in_agenda=added,
+                badge="Saved" if added else None,
             )
-        ],
+        ]
+        if result.session
+        else []
     )
+    return AgentReply(reply=result.message, intent=intents.get(body.tool, "ask"), cards=cards)

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, CalendarCheck, CalendarPlus, CalendarX, Info, Loader2 } from "lucide-react";
+import { AlertTriangle, CalendarCheck, CalendarPlus, CalendarSync, CalendarX, Info, Loader2 } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 
@@ -37,7 +37,8 @@ function ActionButton({ action, prominent }: { action: ProposedAction; prominent
     );
   }
   const removing = action.tool === "remove_session_from_agenda";
-  const text = prominent ? (removing ? "Yes, remove" : "Yes, add it") : action.label;
+  const syncing = action.tool === "sync_agenda_to_calendar";
+  const text = prominent ? (removing ? "Yes, remove" : syncing ? "Yes, sync" : "Yes, add it") : action.label;
   return (
     <Button
       size="sm"
@@ -47,7 +48,7 @@ function ActionButton({ action, prominent }: { action: ProposedAction; prominent
       // Accessible name starts with the visible text (WCAG "label in name"), then adds context.
       aria-label={`${text}: ${action.description}`}
     >
-      {run.isPending ? <Loader2 className="animate-spin" /> : removing ? <CalendarX /> : <CalendarPlus />}
+      {run.isPending ? <Loader2 className="animate-spin" /> : removing ? <CalendarX /> : syncing ? <CalendarSync /> : <CalendarPlus />}
       {text}
     </Button>
   );
@@ -90,6 +91,7 @@ function ConfirmCard({ card }: { card: AgentCard }) {
           <SessionMeta session={card.session} className="mt-1" />
         </>
       )}
+      {card.detail && !card.session && <p className="text-[13px] leading-relaxed text-ink-2">{card.detail}</p>}
       {card.fits_agenda === false && (
         <p className="mt-2 flex items-center gap-1.5 text-[12.5px] text-warn">
           <AlertTriangle className="size-3.5" /> Overlaps a session you already saved.

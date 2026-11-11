@@ -11,6 +11,8 @@ kubectl create namespace kubecompass
 kubectl -n kubecompass create secret generic kubecompass-secrets \
   --from-literal=KUBECOMPASS_ES_URL=... --from-literal=KUBECOMPASS_ES_API_KEY=... \
   --from-literal=OPENAI_API_KEY=... \n  --from-literal=KUBECOMPASS_IDENTITY_SECRET="$(openssl rand -hex 32)"   # keep stable
+# Optional Google Calendar: also add KUBECOMPASS_GOOGLE_CLIENT_ID, KUBECOMPASS_GOOGLE_CLIENT_SECRET
+# and KUBECOMPASS_PUBLIC_BASE_URL (docs/GOOGLE_CALENDAR.md)
 kubectl apply -k deployment/kubernetes
 kubectl -n kubecompass port-forward svc/kubecompass 7860:80   # http://localhost:7860
 ```

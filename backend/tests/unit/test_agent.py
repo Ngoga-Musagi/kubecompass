@@ -4,7 +4,7 @@ from zoneinfo import ZoneInfo
 import pytest
 
 from app.agenda.store import AttendeeState
-from app.agent.permissions import AgentSettings, Permission, normalize_grant
+from app.agent.permissions import AgentSettings, Permission, catalog, normalize_grant
 from app.agent.service import classify, parse_day, parse_minutes
 from app.agent.tools import TOOLS, ToolContext, ToolDenied, ToolError, execute_confirmed, run_tool
 
@@ -46,9 +46,15 @@ def test_minutes_and_days():
 
 
 def test_grants_imply_read_and_skip_unavailable():
-    assert normalize_grant([]) == [Permission.READ]
-    granted = normalize_grant([Permission.AGENDA, Permission.EXTERNAL_ACTIONS])
-    assert granted == [Permission.READ, Permission.AGENDA]  # external actions not grantable yet
+    locked = catalog(calendar_configured=False, calendar_connected=False)
+    assert normalize_grant([], locked) == [Permission.READ]
+    granted = normalize_grant([Permission.AGENDA, Permission.EXTERNAL_ACTIONS], locked)
+    assert granted == [Permission.READ, Permission.AGENDA]  # no calendar → not grantable
+    configured = catalog(calendar_configured=True, calendar_connected=False)
+    req = [Permission.INTEGRATIONS, Permission.EXTERNAL_ACTIONS]
+    assert normalize_grant(req, configured) == [Permission.READ, Permission.INTEGRATIONS]
+    connected = catalog(calendar_configured=True, calendar_connected=True)
+    assert Permission.EXTERNAL_ACTIONS in normalize_grant(req, connected)
     assert not AgentSettings(permissions=[Permission.READ]).allows(Permission.READ)  # disabled
 
 
@@ -87,6 +93,7 @@ def test_consequential_tools_never_run_without_confirmation_path():
     assert {t.name for t in TOOLS.values() if t.consequential} == {
         "add_session_to_agenda",
         "remove_session_from_agenda",
+        "sync_agenda_to_calendar",
     }
 
 

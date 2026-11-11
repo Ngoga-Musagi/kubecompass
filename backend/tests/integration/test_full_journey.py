@@ -282,3 +282,31 @@ def test_agent_authorization_tools_and_confirmed_actions(client):
     assert client.delete("/api/agent/memory", headers=me).json()["has_profile"] is False
     off = client.put("/api/agent", json={"enabled": False}, headers=me).json()
     assert off["enabled"] is False and off["permissions"] == []
+
+
+def test_calendar_integration_is_locked_until_configured(client):
+    me = {"X-Guest-Id": str(uuid.uuid4())}
+    st = client.put(
+        "/api/agent",
+        json={"enabled": True, "permissions": ["integrations", "external_actions", "agenda"]},
+        headers=me,
+    ).json()
+    locked = {c["id"]: c for c in st["catalog"]}
+    assert st["calendar"] == {**st["calendar"], "configured": False, "connected": False}
+    assert not locked["integrations"]["available"] and not locked["external_actions"]["available"]
+    assert st["permissions"] == ["read", "agenda"]  # cannot grant what cannot work
+    r = client.post("/api/integrations/google/connect", headers=me)
+    assert r.status_code == 403 and r.json()["error"]["code"] == "permission_required"
+    reply = client.post(
+        "/api/agent/chat", json={"message": "Sync my agenda to Google Calendar"}, headers=me
+    ).json()
+    assert reply["intent"] == "calendar_sync" and "isn't set up" in reply["reply"]
+    act = {"tool": "sync_agenda_to_calendar", "args": {}, "confirmed": True}
+    assert client.post("/api/agent/actions", json=act, headers=me).status_code == 403
+    cb = client.get(
+        "/api/integrations/google/callback",
+        params={"code": "x", "state": "forged.sig"},
+        follow_redirects=False,
+    )
+    assert cb.status_code == 303 and "calendar=error" in cb.headers["location"]
+    assert client.delete("/api/integrations/google", headers=me).status_code == 200

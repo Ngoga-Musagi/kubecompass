@@ -395,6 +395,32 @@ export interface AgentStatus {
   catalog: PermissionInfo[];
   has_profile: boolean;
   audit: AgentAuditEntry[];
+  calendar: CalendarStatus;
+}
+
+export interface CalendarSyncSummary {
+  at: string;
+  created: number;
+  updated: number;
+  deleted: number;
+  unchanged: number;
+  failed: number;
+  failures: string[];
+}
+
+export interface CalendarStatus {
+  configured: boolean;
+  connected: boolean;
+  calendar_id: string | null;
+  calendar_name: string | null;
+  last_sync: CalendarSyncSummary | null;
+  synced_sessions: number;
+}
+
+export interface CalendarOption {
+  id: string;
+  name: string;
+  primary: boolean;
 }
 
 export interface ProposedAction {

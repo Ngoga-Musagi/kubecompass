@@ -32,8 +32,8 @@ Stored per attendee **per event** in `conference_attendees` (`agent` field), off
 | `read` | search sessions/speakers/schedule, answer questions | implied when enabled |
 | `personalization` | use the attendee's interests/goals for ranking | grantable |
 | `agenda` | read the agenda, find conflicts/free time, *propose* changes | grantable; each change confirmed |
-| `integrations` | connected accounts (Google Calendar) | not available yet |
-| `external_actions` | actions outside conCompass | not available yet |
+| `integrations` | connect Google Calendar, list writable calendars | available when the server has Google configured ([setup](GOOGLE_CALENDAR.md)) |
+| `external_actions` | sync saved sessions to the connected calendar | available once connected; each sync confirmed |
 
 Enforcement is in `app/agent/tools.py` (`run_tool`, `execute_confirmed`, and `_profile_recs`,
 which never uses the profile without `personalization`). The UI only displays the state.
@@ -48,6 +48,7 @@ The attendee can see the last 20 confirmed actions in the permissions sheet.
 | `recommend_sessions`, `suggest_agenda` (greedy conflict-free plan around saved sessions) | personalization | no |
 | `get_user_agenda`, `next_session`, `check_schedule_conflicts` | agenda | no |
 | `add_session_to_agenda`, `remove_session_from_agenda` | agenda | **yes**: proposal + confirmation, idempotent, audited |
+| `sync_agenda_to_calendar` ("sync my agenda to Google Calendar") | external_actions | **yes**: same rules; see [GOOGLE_CALENDAR.md](GOOGLE_CALENDAR.md) |
 
 Each tool has a typed Pydantic input. Adding a tool: write the function, register a `Tool(...)`
 with its permission and `consequential` flag, route an intent to it in `service.py`, add tests.

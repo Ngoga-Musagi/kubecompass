@@ -96,9 +96,21 @@ class Settings(BaseSettings):
         description="Server secret that turns an email/username into a personal attendee id "
         "(HMAC). Keep it stable: changing it detaches everyone from their saved data.",
     )
+    # Google Calendar (OAuth web client). Both unset = calendar integration unavailable.
+    google_client_id: str | None = None
+    google_client_secret: SecretStr | None = None
+    public_base_url: str | None = Field(
+        default=None,
+        description="Public origin serving the UI and /api, e.g. https://kubecompass.onrender.com "
+        "(OAuth redirect: <public_base_url>/api/integrations/google/callback).",
+    )
     cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
     rate_limit_per_minute: int = 30
     allow_remote_refresh: bool = True
+
+    @property
+    def google_configured(self) -> bool:
+        return bool(self.google_client_id and self.google_client_secret and self.public_base_url)
 
     @property
     def data_dir(self) -> Path:

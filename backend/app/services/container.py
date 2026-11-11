@@ -16,6 +16,7 @@ from app.infrastructure.calibration import calibration_for
 from app.infrastructure.elasticsearch import get_es
 from app.infrastructure.embeddings import EmbeddingProvider, build_embedding_provider
 from app.infrastructure.llm import LLMProvider, build_llm_provider
+from app.integrations.google_calendar import GoogleCalendarService
 from app.knowledge_graph.service import GraphService
 from app.knowledge_graph.store import ReadModelRegistry
 from app.knowledge_graph.vocabulary import Vocabulary, get_vocabulary
@@ -39,6 +40,7 @@ class Container:
     agenda: AgendaService
     assistant: AssistantService
     agent: AgentService
+    calendar: GoogleCalendarService
 
 
 def build_container(settings: Settings | None = None) -> Container:
@@ -69,6 +71,7 @@ def build_container(settings: Settings | None = None) -> Container:
         agenda=agenda,
         assistant=assistant,
         agent=AgentService(assistant),
+        calendar=GoogleCalendarService(settings, attendees),
     )
 
 

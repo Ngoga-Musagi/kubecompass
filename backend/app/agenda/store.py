@@ -7,6 +7,7 @@ keeps the snapshot it was saved with, so later schedule changes are detectable).
 
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime
 from typing import Any
 
@@ -21,6 +22,8 @@ from app.infrastructure.elasticsearch import (
     es_call,
 )
 from app.recommendation.profile import InterestProfile
+
+log = logging.getLogger(__name__)
 
 
 class SavedSnapshot(BaseModel):
@@ -55,12 +58,18 @@ class AttendeeStore:
     def _ensure(self) -> None:
         if not self._ready:
             es_call(ensure_state_indices, self.es)
-            # Indices created before the agent existed: add the field (idempotent).
-            es_call(
-                self.es.indices.put_mapping,
-                index=alias("attendees"),
-                properties={"agent": {"type": "object", "enabled": False}},
-            )
+            # Indices created before these fields existed: add them (idempotent). A least-privilege
+            # key may not manage mappings; that's fine once an admin run has added them.
+            try:
+                self.es.indices.put_mapping(
+                    index=alias("attendees"),
+                    properties={
+                        "agent": {"type": "object", "enabled": False},
+                        "integrations": {"type": "object", "enabled": False},
+                    },
+                )
+            except (ApiError, TransportError) as exc:
+                log.warning("Could not update the attendee mapping (needs manage rights): %s", exc)
             self._ready = True
 
     @staticmethod
@@ -88,6 +97,51 @@ class AttendeeStore:
             else AgentSettings(),
             updated_at=src.get("updated_at"),
         )
+
+    # ---- per-person integration records (not event-scoped; same index, own doc id) -----------
+    @staticmethod
+    def _integration_id(provider: str, guest_id: str) -> str:
+        return f"integration:{provider}:{guest_id}"
+
+    def load_integration(self, provider: str, guest_id: str) -> dict[str, Any] | None:
+        self._ensure()
+        try:
+            resp = self.es.get(
+                index=alias("attendees"), id=self._integration_id(provider, guest_id)
+            )
+        except NotFoundError:
+            return None
+        except (ApiError, TransportError) as exc:
+            raise SearchUnavailableError(str(exc)) from exc
+        data: dict[str, Any] | None = (resp["_source"].get("integrations") or {}).get(provider)
+        return data
+
+    def save_integration(self, provider: str, guest_id: str, data: dict[str, Any]) -> None:
+        self._ensure()
+        es_call(
+            self.es.index,
+            index=alias("attendees"),
+            id=self._integration_id(provider, guest_id),
+            document={
+                "guest_id": guest_id,
+                "updated_at": datetime.now(UTC).isoformat(),
+                "integrations": {provider: data},
+            },
+            refresh="wait_for",
+        )
+
+    def delete_integration(self, provider: str, guest_id: str) -> None:
+        self._ensure()
+        try:
+            self.es.delete(
+                index=alias("attendees"),
+                id=self._integration_id(provider, guest_id),
+                refresh="wait_for",
+            )
+        except NotFoundError:
+            pass
+        except (ApiError, TransportError) as exc:
+            raise SearchUnavailableError(str(exc)) from exc
 
     def save(self, state: AttendeeState) -> AttendeeState:
         self._ensure()

@@ -3,6 +3,8 @@ import type {
   AgentPermission,
   AgentReply,
   AgentStatus,
+  CalendarOption,
+  CalendarStatus,
   Alternative,
   ChatResponse,
   ConferenceInfo,
@@ -105,6 +107,11 @@ export const api = {
     }),
   agentAction: (tool: string, args: Record<string, string>) =>
     request<AgentReply>("/api/agent/actions", { method: "POST", body: JSON.stringify({ tool, args, confirmed: true }) }),
+  calendarConnect: () => request<{ auth_url: string }>("/api/integrations/google/connect", { method: "POST" }),
+  calendars: () => request<CalendarOption[]>("/api/integrations/google/calendars"),
+  chooseCalendar: (calendarId: string) =>
+    request<CalendarStatus>("/api/integrations/google/calendar", { method: "PUT", body: JSON.stringify({ calendar_id: calendarId }) }),
+  disconnectCalendar: () => request<CalendarStatus>("/api/integrations/google", { method: "DELETE" }),
   identify: (handle: string) =>
     request<IdentityOut>("/api/identity", { method: "POST", body: JSON.stringify({ handle }) }),
   conferences: () => request<ConferenceInfo[]>("/api/conferences"),

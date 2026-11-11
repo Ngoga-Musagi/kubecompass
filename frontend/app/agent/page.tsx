@@ -8,6 +8,7 @@ import * as React from "react";
 import { AgentCards } from "@/components/agent/agent-cards";
 import { AnswerText } from "@/components/assistant/answer-text";
 import { AgentSetup, PermissionChooser } from "@/components/agent/agent-permissions";
+import { CalendarSection } from "@/components/agent/calendar-section";
 import { Button } from "@/components/ui/button";
 import { Badge, ErrorState, Skeleton } from "@/components/ui/primitives";
 import { Sheet } from "@/components/ui/sheet";
@@ -36,6 +37,7 @@ const TOOL_LABELS: Record<string, string> = {
   check_schedule_conflicts: "Checked your agenda for conflicts",
   suggest_agenda: "Planned around your agenda",
   grounded_answer: "Answered from the event data",
+  sync_agenda_to_calendar: "Synced your Google Calendar",
 };
 
 /** A day inside the event to plan: tomorrow while the event runs, otherwise its first day. */
@@ -114,6 +116,7 @@ function AgentSettings({ status, open, onOpenChange }: { status: AgentStatus; op
       }
     >
       <PermissionChooser status={status} value={perms} onChange={setPerms} />
+      <CalendarSection status={status} pending={perms} />
       <div className="mt-6 rounded-xl border border-line p-3">
         <p className="text-[13px] font-medium">What it knows about you</p>
         <p className="mt-0.5 text-[12.5px] text-ink-3">
@@ -136,7 +139,14 @@ function AgentSettings({ status, open, onOpenChange }: { status: AgentStatus; op
           <ul className="space-y-1.5 text-[12.5px] text-ink-2">
             {status.audit.slice(0, 8).map((a, i) => (
               <li key={i} className="flex justify-between gap-3">
-                <span className="truncate">{a.tool === "add_session_to_agenda" ? "Added a session" : "Removed a session"}</span>
+                <span className="truncate">
+                  {a.tool === "add_session_to_agenda"
+                    ? "Added a session"
+                    : a.tool === "sync_agenda_to_calendar"
+                      ? "Synced to Google Calendar"
+                      : "Removed a session"}
+                  {a.outcome === "failed" && " (failed)"}
+                </span>
                 <span className="shrink-0 text-ink-4">{new Date(a.at).toLocaleString()}</span>
               </li>
             ))}
@@ -215,6 +225,20 @@ export default function AgentPage() {
     setMicSupported(speechInput.supported);
     return () => speechOutput.cancel();
   }, []);
+
+  const toast = useToast();
+  // Back from Google's consent screen: say what happened and reopen the permissions panel.
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const result = params.get("calendar");
+    if (!result) return;
+    window.history.replaceState(null, "", window.location.pathname);
+    if (result === "connected") toast({ tone: "success", title: "Google Calendar connected", description: "Allow “Act outside conCompass”, then sync." });
+    else if (result === "cancelled") toast({ tone: "info", title: "Google Calendar wasn't connected" });
+    else toast({ tone: "error", title: "Couldn't connect Google Calendar", description: params.get("reason") ?? undefined });
+    void qc.invalidateQueries({ queryKey: ["agent"] });
+    setSettingsOpen(true);
+  }, [qc, toast]);
 
   const enable = useMutation({
     mutationFn: (perms: AgentPermission[]) => api.setAgent(true, perms),

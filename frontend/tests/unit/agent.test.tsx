@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 
 import { AgentCards } from "@/components/agent/agent-cards";
 import { PermissionChooser } from "@/components/agent/agent-permissions";
+import { CalendarSection } from "@/components/agent/calendar-section";
 import { ToastProvider } from "@/components/ui/toast";
 import { speakable } from "@/lib/voice";
 import type { AgentCard, AgentStatus } from "@/types/api";
@@ -16,7 +17,7 @@ vi.mock("@/hooks/use-conference", () => ({
 const agentAction = vi.fn();
 vi.mock("@/lib/api", async (orig) => ({
   ...(await orig<typeof import("@/lib/api")>()),
-  api: { agentAction: (...a: unknown[]) => agentAction(...a) },
+  api: { agentAction: (...a: unknown[]) => agentAction(...a), calendars: () => Promise.resolve([]) },
 }));
 
 function wrap(ui: ReactNode) {
@@ -56,6 +57,7 @@ const status: AgentStatus = {
   enabled_at: null,
   has_profile: false,
   audit: [],
+  calendar: { configured: false, connected: false, calendar_id: null, calendar_name: null, last_sync: null, synced_sessions: 0 },
   catalog: [
     { id: "read", title: "Read event information", description: "Search.", available: true, unavailable_reason: null },
     { id: "agenda", title: "Manage my agenda", description: "Propose changes.", available: true, unavailable_reason: null },
@@ -111,5 +113,34 @@ describe("AgentCards", () => {
     await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(screen.getByText("Okay, no changes made.")).toBeInTheDocument();
     expect(agentAction).not.toHaveBeenCalled();
+  });
+});
+
+describe("CalendarSection", () => {
+  it("explains when Google Calendar isn't set up on the server", () => {
+    wrap(<CalendarSection status={status} pending={[]} />);
+    expect(screen.getByText(/Not set up on this server yet/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Connect Google Calendar/ })).not.toBeInTheDocument();
+  });
+
+  it("offers to connect when configured", () => {
+    const configured = { ...status, calendar: { ...status.calendar, configured: true } };
+    wrap(<CalendarSection status={configured} pending={[]} />);
+    expect(screen.getByRole("button", { name: /Connect Google Calendar/ })).toBeEnabled();
+  });
+
+  it("won't sync until the attendee allows acting outside conCompass", () => {
+    const connected: AgentStatus = {
+      ...status,
+      permissions: ["read", "integrations"],
+      calendar: { ...status.calendar, configured: true, connected: true, calendar_id: "primary", calendar_name: "Me" },
+    };
+    const { unmount } = wrap(<CalendarSection status={connected} pending={[]} />);
+    expect(screen.getByRole("button", { name: /Sync my agenda now/ })).toBeDisabled();
+    expect(screen.getByText(/Allow “Act outside conCompass”/)).toBeInTheDocument();
+    unmount();
+    wrap(<CalendarSection status={{ ...connected, permissions: ["read", "integrations", "external_actions"] }} pending={[]} />);
+    expect(screen.getByRole("button", { name: /Sync my agenda now/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Disconnect/ })).toBeEnabled();
   });
 });
